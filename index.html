@@ -914,7 +914,7 @@ table.dt tbody tr:hover td{background:var(--bg3)}
               <div id="fin-personas-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px"></div>
               <div style="font-size:11px;color:var(--text2);margin-top:5px" id="fin-division-lbl"></div>
             </div>
-            <div id="fin-error" style="display:none;color:#A32D2D;font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:5px">⚠️ Completa al menos importe, proyecto y concepto</div>
+            <div id="fin-error" style="display:none;color:#A32D2D;font-size:12px;margin-bottom:8px;align-items:center;gap:5px">⚠️ Completa al menos importe, proyecto y concepto</div>
             <button id="fin-submit-btn" onclick="saveMovimiento()" style="width:100%;padding:10px;border-radius:var(--r);border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;background:#E1F5EE;color:#085041;display:flex;align-items:center;justify-content:center;gap:6px">➕ Registrar ingreso</button>
           </div>
 
@@ -1112,91 +1112,111 @@ const SUPA_URL = 'https://hwapyvywbnwmbnxmcicd.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YXB5dnl3Ym53bWJueG1jaWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1ODI5NTcsImV4cCI6MjA5NzE1ODk1N30.BW4WtvewkQrNfh9BTehO-XGV1p_x6S6T6wR_2ANslzY';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-// ══ AUTH ══
-async function sbLogin(email, pass) {
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) throw error;
-  return data.user;
+// ══ AUTH (local — passwords en USERS, sesión en localStorage) ══
+function sbLogin(email, pass) {
+  var u = USERS[email];
+  if (!u || u.pass !== pass) throw new Error('Credenciales incorrectas');
+  localStorage.setItem('nova_session', email);
 }
-async function sbLogout() {
-  await sb.auth.signOut();
+function sbLogout() {
+  localStorage.removeItem('nova_session');
 }
 
 // ══ DB HELPERS ══
 const DB = {
   // Perfiles
   async getPerfiles() {
-    const { data } = await sb.from('perfiles').select('*');
+    const { data, error } = await sb.from('perfiles').select('*');
+    if(error) { console.error('getPerfiles error:', error); return []; }
     return data || [];
   },
   async updatePerfil(email, fields) {
-    await sb.from('perfiles').update(fields).eq('email', email);
+    const { error } = await sb.from('perfiles').update(fields).eq('email', email);
+    if(error) console.error('updatePerfil error:', error);
   },
 
   // Proyectos
   async getProyectos() {
-    const { data } = await sb.from('proyectos').select('*').order('created_at');
+    const { data, error } = await sb.from('proyectos').select('*').order('created_at');
+    if(error) { console.error('getProyectos error:', error); return []; }
     return data || [];
   },
   async upsertProyecto(p) {
     if (p.id) {
-      await sb.from('proyectos').update(p).eq('id', p.id);
+      const { error } = await sb.from('proyectos').update(p).eq('id', p.id);
+      if(error) console.error('upsertProyecto error:', error);
     } else {
-      const { data } = await sb.from('proyectos').insert(p).select().single();
+      const { data, error } = await sb.from('proyectos').insert(p).select().single();
+      if(error) { console.error('insertProyecto error:', error); return null; }
       return data;
     }
   },
   async deleteProyecto(id) {
-    await sb.from('proyectos').delete().eq('id', id);
+    const { error } = await sb.from('proyectos').delete().eq('id', id);
+    if(error) console.error('deleteProyecto error:', error);
   },
 
   // Horas
   async getHoras() {
-    const { data } = await sb.from('horas').select('*').order('fecha', { ascending: false });
+    const { data, error } = await sb.from('horas').select('*').order('fecha', { ascending: false }).order('created_at', { ascending: false });
+    if(error) { console.error('getHoras error:', error); return []; }
     return data || [];
   },
   async insertHora(h) {
-    const { data } = await sb.from('horas').insert(h).select().single();
+    // Eliminar campo 'tipo' si la tabla no lo tiene — no causa error pero lo quitamos por seguridad
+    var payload = Object.assign({}, h);
+    delete payload.tipo;
+    const { data, error } = await sb.from('horas').insert(payload).select().single();
+    if(error) { console.error('insertHora error:', error); return null; }
     return data;
   },
   async deleteHora(id) {
-    await sb.from('horas').delete().eq('id', id);
+    const { error } = await sb.from('horas').delete().eq('id', id);
+    if(error) console.error('deleteHora error:', error);
   },
 
   // Reportes
   async getReportes() {
-    const { data } = await sb.from('reportes').select('*').order('created_at', { ascending: false });
+    const { data, error } = await sb.from('reportes').select('*').order('created_at', { ascending: false });
+    if(error) { console.error('getReportes error:', error); return []; }
     return data || [];
   },
   async insertReporte(r) {
-    const { data } = await sb.from('reportes').insert(r).select().single();
+    const { data, error } = await sb.from('reportes').insert(r).select().single();
+    if(error) { console.error('insertReporte error:', error); return null; }
     return data;
   },
 
   // Comentarios
   async getComentarios() {
-    const { data } = await sb.from('comentarios').select('*').order('created_at');
+    const { data, error } = await sb.from('comentarios').select('*').order('created_at');
+    if(error) { console.error('getComentarios error:', error); return []; }
     return data || [];
   },
   async insertComentario(c) {
-    const { data } = await sb.from('comentarios').insert(c).select().single();
+    const { data, error } = await sb.from('comentarios').insert(c).select().single();
+    if(error) { console.error('insertComentario error:', error); return null; }
     return data;
   },
   async deleteComentario(id) {
-    await sb.from('comentarios').delete().eq('id', id);
+    const { error } = await sb.from('comentarios').delete().eq('id', id);
+    if(error) console.error('deleteComentario error:', error);
   },
 
   // Movimientos
   async getMovimientos() {
-    const { data } = await sb.from('movimientos').select('*').order('fecha', { ascending: false });
+    const { data, error } = await sb.from('movimientos').select('*').order('fecha', { ascending: false });
+    if(error) { console.error('getMovimientos error:', error); return []; }
     return data || [];
   },
   async insertMovimiento(m) {
-    const { data } = await sb.from('movimientos').insert(m).select().single();
+    const { data, error } = await sb.from('movimientos').insert(m).select().single();
+    if(error) { console.error('insertMovimiento error:', error); return null; }
     return data;
   },
   async deleteMovimiento(id) {
-    await sb.from('movimientos').delete().eq('id', id);
+    const { error } = await sb.from('movimientos').delete().eq('id', id);
+    if(error) console.error('deleteMovimiento error:', error);
   }
 };
 
@@ -1245,13 +1265,29 @@ async function syncProyectos() {
 
 async function syncHoras() {
   var data = await DB.getHoras();
-  var supaHoras = data.filter(function(h){return cu&&h.email===cu.email;}).map(function(h) {
-    return {id:h.id, email:h.email, proyecto:h.proyecto||'', descripcion:h.descripcion||'', horas:h.horas, fecha:h.fecha, ini:h.hora_ini||'', fin:h.hora_fin||''};
+  // allHoras contiene TODOS los registros de todos los miembros del equipo
+  allHoras = data.map(function(h) {
+    return {id:h.id, email:h.email, proyecto:h.proyecto||'', descripcion:h.descripcion||'',
+            horas:parseFloat(h.horas)||0, fecha:h.fecha, ini:h.hora_ini||'', fin:h.hora_fin||''};
   });
-  // Conservar registros locales pendientes (id empieza por 'local_') que aún no tienen id real
+  // Horas del usuario actual desde Supabase
+  var mySupaHoras = allHoras.filter(function(h){return cu && h.email===cu.email;});
+  // Entradas locales pendientes que aún no tienen id real de Supabase
   var localPendientes = userHoras.filter(function(h){return String(h.id).startsWith('local_');});
-  userHoras = supaHoras.concat(localPendientes);
-  userHoras.sort(function(a,b){return b.fecha>a.fecha?1:b.fecha<a.fecha?-1:0;});
+  // Eliminar locales que ya existen en Supabase (misma fecha + hora_ini + hora_fin + horas ≈ iguales)
+  // Evita duplicados cuando realtime llega antes del .then() callback
+  localPendientes = localPendientes.filter(function(lh){
+    return !mySupaHoras.some(function(sh){
+      return sh.fecha === lh.fecha
+        && sh.ini   === lh.ini
+        && sh.fin   === lh.fin
+        && Math.abs(sh.horas - lh.horas) < 0.01
+        && sh.email === lh.email;
+    });
+  });
+  userHoras = mySupaHoras.concat(localPendientes);
+  // Orden descendente por fecha (más reciente primero)
+  userHoras.sort(function(a,b){return a.fecha > b.fecha ? -1 : a.fecha < b.fecha ? 1 : 0;});
   renderHCList(); renderHCHist(); renderHDash(); renderDash();
 }
 
@@ -1265,6 +1301,8 @@ async function syncReportes() {
       ayuda:r.ayuda||'', ayuda_quien:r.ayuda_quien||'', riesgo:r.riesgo||'',
       horas:r.horas||0, importe:r.importe||0, beneficio:r.beneficio||0,
       mentorias:r.mentorias||0, ts:r.ts||0,
+      asLegal:r.as_legal||0, asFin:r.as_fin||0, asTech:r.as_tech||0,
+      reunExp:r.reun_exp||0, reunVal:r.reun_val||0, reunVta:r.reun_vta||0,
       fecha:new Date(r.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})
     };
   });
@@ -1353,7 +1391,7 @@ var ALL_BADGES=[
   {sec:'especial', icon:'👑', lbl:'El Chapado',    desc:'1.º en ranking el 15 de septiembre',    req:function(m){return m.badge_chapado||false;},        pts:300, tier:'Legendary', cls:'bi-gold'}
 ];
 var MOTES=['🏆 El Chapado','🥈 El Constante','🥉 El Prometedor','⚡ En progreso','💪 Calentando','🎯 En la pista','🚀 Despegando','😴 Modo siesta','🐢 Paso a paso'];
-var proyectos=[],userHoras=[],userReportes=[],cu=null,selMood='',charts={},cf={per:'sem',proj:'sem'},sbOpen=true;
+var proyectos=[],userHoras=[],allHoras=[],userReportes=[],cu=null,selMood='',charts={},cf={per:'sem',proj:'sem'},sbOpen=true;
 
 // ══ SISTEMA DE PUNTOS v3 ══
 // 0.5pt/hora · 1pt/10€ · 50pt/período reportado · badges acumulables
@@ -1450,12 +1488,10 @@ document.getElementById('lbtn').onclick=async function(){
   var email=document.getElementById('lemail').value.trim().toLowerCase();
   var pass=document.getElementById('lpass').value;
   var lerr=document.getElementById('lerr');
-  if(!USERS[email]){if(lerr)lerr.style.display='flex';return;}
   var lbtn=document.getElementById('lbtn');
   lbtn.disabled=true; lbtn.textContent='Entrando...';
   try {
-    var res = await sb.auth.signInWithPassword({email:email, password:pass});
-    if(res.error) throw res.error;
+    sbLogin(email, pass);
     await entrarApp(email);
   } catch(e) {
     if(lerr)lerr.style.display='flex';
@@ -1464,29 +1500,25 @@ document.getElementById('lbtn').onclick=async function(){
 };
 
 // Recuperar sesión al recargar
-sb.auth.getSession().then(async function(result){
-  if(result.data && result.data.session){
-    var email = result.data.session.user.email;
-    if(USERS[email]) await entrarApp(email);
-  }
-});
+(async function(){
+  var email = localStorage.getItem('nova_session');
+  if(email && USERS[email]) await entrarApp(email);
+})();
 
-// Escuchar cambios de sesión
-sb.auth.onAuthStateChange(function(event, session){
-  if(event==='SIGNED_OUT'){
-    cu=null;
-    document.getElementById('app-screen').style.display='none';
-    document.getElementById('login-screen').style.display='flex';
-    document.body.classList.remove('in-app');
-    document.getElementById('lerr').style.display='none';
-    document.getElementById('nav-junta').style.display='none';
-  }
-});
+function _volverLogin(){
+  cu=null;
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.body.classList.remove('in-app');
+  document.getElementById('lerr').style.display='none';
+  document.getElementById('nav-junta').style.display='none';
+}
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&document.getElementById('login-screen').style.display!=='none')document.getElementById('lbtn').click();});
 
 function logout(){
   Object.keys(charts).forEach(function(k){try{charts[k].destroy();}catch(e){}});charts={};
-  sb.auth.signOut();
+  sbLogout();
+  _volverLogin();
 }
 
 // SIDEBAR
@@ -1507,7 +1539,7 @@ function go(id,el){
   document.getElementById('tb-title').textContent=PTITLES[id]||id;
   if(id==='dashboard')setTimeout(function(){renderDash();renderCharts();renderRacha();},60);
   if(id==='ranking')renderRanking();
-  if(id==='mis-horas')setTimeout(function(){updHCSelects();var hcf=document.getElementById('hc-fecha');if(hcf)hcf.valueAsDate=new Date();renderHCList();renderHCHist();},50);
+  if(id==='mis-horas')setTimeout(function(){updSelects();var hcf=document.getElementById('hc-fecha');if(hcf)hcf.valueAsDate=new Date();renderHCList();renderHCHist();},50);
   if(id==='proyectos')setTimeout(renderProyCards,50);
   if(id==='equipo')setTimeout(renderEquipo,50);
   if(id==='reportes-equipo')setTimeout(function(){initReportesEquipo();},50);
@@ -1533,8 +1565,10 @@ function renderDash(){
   var tP=10,pC=Math.floor(pDy/15),pR=Math.max(0,tP-pC),rPos=tP*9; // siempre 90
   var rH=TEAM.reduce(function(s,m){return s+(m.reportado_count||0);},0);
   var mL=monL(now),mD=monD(now);
-  var hSem=userHoras.filter(function(h){var d=new Date(h.fecha);return d>=mL&&d<=mD;}).reduce(function(s,h){return s+h.horas;},0);
-  var hTot=TEAM.reduce(function(s,m){return s+m.horas;},0)+userHoras.reduce(function(s,h){return s+h.horas;},0);
+  // hSem: horas del usuario actual esta semana (T12:00:00 evita bugs de timezone)
+  var hSem=userHoras.filter(function(h){var d=new Date(h.fecha+'T12:00:00');return d>=mL&&d<=mD;}).reduce(function(s,h){return s+h.horas;},0);
+  // hTot: suma de perfiles (fuente de verdad para totales de equipo — no sumar userHoras para evitar doble conteo)
+  var hTot=TEAM.reduce(function(s,m){return s+m.horas;},0);
   var eTot=TEAM.reduce(function(s,m){return s+m.ingresos;},0);
   var isFut=nD<sD;
 
@@ -1587,18 +1621,18 @@ function renderTL(done,total){
 // CHARTS
 var COLS=['#7F77DD','#1D9E75','#D85A30','#378ADD','#EF9F27','#B4B2A9','#CE7BC7','#E24B4A'];
 function getHPer(f){
-  var now=new Date(),src=userHoras;
-  if(f==='sem'){var a=monL(now),b=monD(now);src=userHoras.filter(function(h){var d=new Date(h.fecha);return d>=a&&d<=b;});}
-  else if(f==='mes'){var y=now.getFullYear(),m=now.getMonth();var a=new Date(y,m,1),b=new Date(y,m+1,0,23,59,59);src=userHoras.filter(function(h){var d=new Date(h.fecha);return d>=a&&d<=b;});}
+  var now=new Date(),src=allHoras; // allHoras tiene datos de todo el equipo
+  if(f==='sem'){var a=monL(now),b=monD(now);src=allHoras.filter(function(h){var d=new Date(h.fecha+'T12:00:00');return d>=a&&d<=b;});}
+  else if(f==='mes'){var y=now.getFullYear(),m2=now.getMonth();var a=new Date(y,m2,1),b=new Date(y,m2+1,0,23,59,59);src=allHoras.filter(function(h){var d=new Date(h.fecha+'T12:00:00');return d>=a&&d<=b;});}
   return Object.keys(USERS).map(function(e){
     if(f==='tot'){var t=TEAM.find(function(m){return m.email===e;});return t?t.horas:0;}
     return src.filter(function(h){return h.email===e;}).reduce(function(s,h){return s+h.horas;},0);
   });
 }
 function getHProj(f){
-  var now=new Date(),src=userHoras,byP={};
-  if(f==='sem'){var a=monL(now),b=monD(now);src=userHoras.filter(function(h){var d=new Date(h.fecha);return d>=a&&d<=b;});}
-  else if(f==='mes'){var y=now.getFullYear(),m=now.getMonth();var a=new Date(y,m,1),b=new Date(y,m+1,0,23,59,59);src=userHoras.filter(function(h){var d=new Date(h.fecha);return d>=a&&d<=b;});}
+  var now=new Date(),src=allHoras,byP={}; // allHoras tiene datos de todo el equipo
+  if(f==='sem'){var a=monL(now),b=monD(now);src=allHoras.filter(function(h){var d=new Date(h.fecha+'T12:00:00');return d>=a&&d<=b;});}
+  else if(f==='mes'){var y=now.getFullYear(),m2=now.getMonth();var a=new Date(y,m2,1),b=new Date(y,m2+1,0,23,59,59);src=allHoras.filter(function(h){var d=new Date(h.fecha+'T12:00:00');return d>=a&&d<=b;});}
   if(f==='tot')TEAM.forEach(function(m){if(m.proyecto)byP[m.proyecto]=(byP[m.proyecto]||0)+m.horas;});
   src.forEach(function(h){if(h.proyecto)byP[h.proyecto]=(byP[h.proyecto]||0)+h.horas;});
   return byP;
@@ -1732,7 +1766,7 @@ function getBadges(m){
 // Comprobar badge Semana Bestia (30h en una semana)
 function checkBadgeSemanaBestia(email){
   var byWeek={};
-  userHoras.filter(function(h){return h.email===email;}).forEach(function(h){
+  allHoras.filter(function(h){return h.email===email;}).forEach(function(h){
     var lun=monL(new Date(h.fecha+'T12:00:00')).toISOString().slice(0,10);
     byWeek[lun]=(byWeek[lun]||0)+h.horas;
   });
@@ -1798,7 +1832,7 @@ function renderRanking(){
       +secBadges.map(function(b){
         var ul=me&&b.req(me);
         var tc=tierColors[b.tier]||'#534AB7';
-        var bg2=ul?(tier==='Nova'?'linear-gradient(160deg,#FAF5FF,#fff)':(tier==='Diamante'?'linear-gradient(160deg,#F0FDFF,#fff)':'var(--bg2)')):'var(--bg2)';
+        var bg2=ul?(b.tier==='Nova'?'linear-gradient(160deg,#FAF5FF,#fff)':(b.tier==='Diamante'?'linear-gradient(160deg,#F0FDFF,#fff)':'var(--bg2)')):'var(--bg2)';
         var border2=ul?tc+'44':'var(--border)';
         return '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border-radius:var(--rl);border:1px solid '+border2+';background:'+(ul?bg2:'var(--bg2)')+';opacity:'+(ul?1:.4)+';text-align:center">'
           +'<span style="font-size:22px">'+b.icon+'</span>'
@@ -1816,8 +1850,8 @@ function renderRanking(){
 function renderEH(){
   var datos=Object.keys(USERS).map(function(e){
     var u=USERS[e],m=TEAM.find(function(t){return t.email===e;});
-    var mh=userHoras.filter(function(h){return h.email===e;}).reduce(function(s,h){return s+h.horas;},0);
-    var horas=(m?m.horas:0)+mh,fact=m?m.ingresos:0,eh=horas>0?Math.round(fact/horas*10)/10:0;
+    // Usar m.horas (de perfiles) como fuente de verdad — evita doble conteo con userHoras
+    var horas=m?m.horas:0,fact=m?m.ingresos:0,eh=horas>0?Math.round(fact/horas*10)/10:0;
     return {name:u.name,av:u.av,ini:u.ini,horas:horas,fact:fact,eh:eh};
   });
   var tH=datos.reduce(function(s,d){return s+d.horas;},0),tF=datos.reduce(function(s,d){return s+d.fact;},0);
@@ -1995,6 +2029,7 @@ function saveRep(){
     var bl=(document.getElementById('rep-bl-'+pid)||{}).value||'';
     if(bl.trim().length>3)bloqueoActual=true;
     var r={
+      autor_email:cu.email,
       fecha:now.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}),
       periodo:'P'+info.periodo+' · '+getPer(),
       proyecto:proy?proy.value||'Sin proyecto':'Sin proyecto',
@@ -2012,7 +2047,7 @@ function saveRep(){
     userReportes.unshift(r);
     // Guardar en Supabase
     DB.insertReporte({
-      autor_email:r.autor_email||cu.email, periodo:r.periodo, proyecto:r.proyecto||'',
+      autor_email:cu.email, periodo:r.periodo, proyecto:r.proyecto||'',
       mood:r.mood||'', avances:r.avances||'', logro:r.logro||'', bloqueos:r.bloqueos||'',
       aprendizajes:r.aprendizajes||'', proximos:r.proximos||'', feedback:r.feedback||'',
       ayuda:r.ayuda||'', ayuda_quien:r.ayuda_quien||'', riesgo:r.riesgo||'',
@@ -2020,17 +2055,19 @@ function saveRep(){
       mentorias:r.mentorias||0, as_legal:r.asLegal||0, as_fin:r.asFin||0, as_tech:r.asTech||0,
       reun_exp:r.reunExp||0, reun_val:r.reunVal||0, reun_vta:r.reunVta||0,
       ts:Date.now()
-    }).then(function(data){ if(data) r.id=data.id; });
+    }).then(function(data){
+      if(data) {
+        r.id=data.id;
+      } else {
+        console.error('insertReporte failed — posible columna inexistente en BD');
+        var repOkEl=document.getElementById('rep-ok');
+        if(repOkEl){repOkEl.style.display='none';}
+        var repErr=document.getElementById('lerr');
+        // Mostrar aviso en consola, el reporte sí quedó local
+      }
+    });
   });
-  // Actualizar perfil en Supabase
-  var meSup=TEAM.find(function(t){return t.email===cu.email;});
-  if(meSup) DB.updatePerfil(cu.email,{
-    horas:meSup.horas, ingresos:meSup.ingresos, beneficio:meSup.beneficio||0,
-    racha:meSup.racha, reportado:meSup.reportado, reportado_count:meSup.reportado_count,
-    mood:meSup.mood||null, bloqueo:meSup.bloqueo||'', ayuda_count:meSup.ayuda_count||0,
-    mentorias_total:meSup.mentorias_total||0, asesorias_total:meSup.asesorias_total||0,
-    reuniones_total:meSup.reuniones_total||0, badge_conector:meSup.badge_conector||false
-  });
+  // Actualizar TEAM primero, luego guardar perfil en Supabase con valores ya actualizados
   if(me){
     me.reportado=true;
     me.reportado_count=(me.reportado_count||0)+1;
@@ -2046,6 +2083,14 @@ function saveRep(){
     if(ayudaQuien){me.ayuda_count=(me.ayuda_count||0)+1;if(me.ayuda_count>=3)me.badge_conector=true;}
     me.badge_tuvo_bloqueo=bloqueoActual;
     me.bloqueo=bloqueoActual?((document.getElementById('rep-bl-0')||{}).value||''):'';
+    // Ahora que me ya está actualizado, guardar perfil con los valores correctos
+    DB.updatePerfil(cu.email,{
+      horas:me.horas, ingresos:me.ingresos, beneficio:me.beneficio||0,
+      racha:me.racha, reportado:true, reportado_count:me.reportado_count,
+      mood:me.mood||null, bloqueo:me.bloqueo||'', ayuda_count:me.ayuda_count||0,
+      mentorias_total:me.mentorias_total||0, asesorias_total:me.asesorias_total||0,
+      reuniones_total:me.reuniones_total||0, badge_conector:me.badge_conector||false
+    });
   }
   var ptEl=document.getElementById('rep-pts');
   if(ptEl)ptEl.textContent='+'+(50+Math.round(horas*0.5))+' pts base 🎉';
@@ -2196,8 +2241,7 @@ function renderEquipo(){
     var posRank=sortedAll.findIndex(function(x){return x.email===m.email;})+1;
     var moodStr=m.mood?(moodEmojis[m.mood]||''):'—';
     var ehVal=m.horas>0?Math.round(m.ingresos/m.horas*10)/10:0;
-    var misHoras=userHoras.filter(function(h){return h.email===m.email;}).reduce(function(s,h){return s+h.horas;},0);
-    var totalH=m.horas+misHoras;
+    var totalH=m.horas; // m.horas de perfiles es el total real — sin doble conteo
     var fc=FASE_CONFIG&&m.proyecto?(function(){var proy=proyectos.find(function(x){return x.nombre===m.proyecto;});return proy?FASE_CONFIG[proy.estado]:null;})():null;
     // Estado reporte
     var repStatusColor=m.reportado?'var(--teal)':'var(--red)';
@@ -2309,9 +2353,9 @@ function renderInforme(){
   var rng=getInfRangoFechas();
   var isPersona=(_infFilter!=='equipo');
 
-  // Filtrar horas en rango
-  var horasFiltro=userHoras.filter(function(h){
-    var d=new Date(h.fecha);
+  // Filtrar horas en rango — usar allHoras para ver datos de todo el equipo
+  var horasFiltro=allHoras.filter(function(h){
+    var d=new Date(h.fecha+'T12:00:00');
     if(d<rng.desde||d>rng.hasta)return false;
     if(isPersona&&h.email!==_infFilter)return false;
     if(_infProy!=='todos'&&h.proyecto!==_infProy)return false;
@@ -2494,21 +2538,6 @@ function renderInforme(){
   cont.innerHTML=html;
 }
 
-function swPrTab(id, el) {
-  ['ptab-cards','ptab-ranking','ptab-mentores'].forEach(function(t){var e=document.getElementById(t);if(e)e.style.display='none';});
-  var te=document.getElementById(id); if(te)te.style.display='block';
-  document.querySelectorAll('#page-proyectos .tab').forEach(function(t){t.classList.remove('on');});
-  if(el)el.classList.add('on');
-  if(id==='ptab-ranking') renderProyRanking();
-  if(id==='ptab-mentores') {
-    setTimeout(function(){
-      if(_mentorSubTab==='todos') renderTodosMentores();
-      else renderMentorCards(mentorFilterProy);
-    }, 50);
-  }
-}
-
-
 // ══ FINANZAS ══
 var movimientos = []; // {id, tipo, importe, proyecto, concepto, categoria, fecha, personas, factura}
 var _finTipo = 'ingreso';
@@ -2587,7 +2616,7 @@ function saveMovimiento() {
   var errEl = document.getElementById('fin-error');
   if(!imp||!proy||!conc) { if(errEl)errEl.style.display='flex'; setTimeout(function(){if(errEl)errEl.style.display='none';},3000); return; }
   var mov = {
-    id: Date.now(),
+    id: 'local_'+Date.now(),
     tipo: _finTipo,
     importe: imp,
     proyecto: proy,
@@ -2602,7 +2631,10 @@ function saveMovimiento() {
     tipo:mov.tipo, importe:mov.importe, proyecto:mov.proyecto,
     concepto:mov.concepto, categoria:mov.categoria,
     fecha:mov.fecha, personas:mov.personas, factura:mov.factura
-  }).then(function(data){ if(data) mov.id=data.id; });
+  }).then(function(data){
+    if(data) { mov.id=data.id; }
+    else { console.error('insertMovimiento failed'); }
+  });
   movimientos.unshift(mov);
   // Actualizar proyecto
   var p = proyectos.find(function(x){return x.nombre===proy;});
@@ -2635,7 +2667,9 @@ function renderFinanzas() {
   renderFinMovimientos();
   renderFinHistorial();
   renderFinPorProy();
-  renderFinAnalisis();
+  // Solo renderizar análisis si el tab está visible (evita charts con 0px)
+  var ftA=document.getElementById('ft-analisis');
+  if(ftA && ftA.style.display!=='none') renderFinAnalisis();
 }
 
 function getFinTotales() {
@@ -2646,7 +2680,7 @@ function getFinTotales() {
 
 function renderFinKPIs() {
   var t = getFinTotales();
-  var totalH = TEAM.reduce(function(s,m){return s+m.horas;},0)+userHoras.reduce(function(s,h){return s+h.horas;},0);
+  var totalH = TEAM.reduce(function(s,m){return s+m.horas;},0);
   var eh = totalH>0?Math.round(t.ben/totalH*10)/10:0;
   function si(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
   si('fin-kpi-ing',t.ing.toLocaleString('es-ES')+'€');
@@ -2679,13 +2713,14 @@ function renderFinMovimientos() {
       +'<div style="display:flex;align-items:center;gap:8px">'
         +(m.factura==='si'?'<span title="Con justificante" style="font-size:12px;color:var(--teal)">📎</span>':m.factura==='no'?'<span title="Sin justificante" style="font-size:12px;color:var(--coral)">❌</span>':'')
         +'<div class="fin-mov-amt" style="color:'+(ing?'#085041':'#A32D2D')+'">'+(ing?'+':'-')+m.importe.toLocaleString('es-ES')+'€</div>'
-        +'<button onclick="delMovimiento('+m.id+')" class="btn btn-sm btn-d" style="padding:3px 7px;flex-shrink:0">🗑️</button>'
+        +'<button onclick="delMovimiento(\''+m.id+'\')" class="btn btn-sm btn-d" style="padding:3px 7px;flex-shrink:0">🗑️</button>'
       +'</div></div>';
   }).join('');
 }
 
 function delMovimiento(id) {
-  var idx = movimientos.findIndex(function(m){return m.id===id;});
+  var idStr=String(id);
+  var idx = movimientos.findIndex(function(m){return String(m.id)===idStr;});
   if(idx<0) return;
   var m = movimientos[idx];
   var p = proyectos.find(function(x){return x.nombre===m.proyecto;});
@@ -2694,7 +2729,7 @@ function delMovimiento(id) {
     else p.gastos=Math.max(0,(p.gastos||0)-m.importe);
     p.beneficio=(p.ingresos||0)-(p.gastos||0);
   }
-  if(m.id) DB.deleteMovimiento(m.id);
+  if(m.id && !idStr.startsWith('local_')) DB.deleteMovimiento(m.id);
   movimientos.splice(idx,1);
   renderFinanzas(); renderDash(); renderEH();
 }
@@ -2736,7 +2771,7 @@ function renderFinHistorial() {
       +'<td style="font-size:11px;color:var(--text3)">'+personas+'</td>'
       +'<td style="font-size:11px">'+(m.factura==='si'?'<span style="color:var(--teal)">✓</span>':m.factura==='no'?'<span style="color:var(--coral)">✗</span>':'⏳')+'</td>'
       +'<td style="text-align:right;font-weight:600;color:'+(ing?'#085041':'#A32D2D')+'">'+(ing?'+':'-')+m.importe.toLocaleString('es-ES')+'€</td>'
-      +'<td><button onclick="delMovimiento('+m.id+')" class="btn btn-sm btn-d" style="padding:2px 6px">🗑️</button></td>'
+      +'<td><button onclick="delMovimiento(\''+m.id+'\')" class="btn btn-sm btn-d" style="padding:2px 6px">🗑️</button></td>'
       +'</tr>';
   }).join('');
 }
@@ -3167,30 +3202,50 @@ function addEntradaManual(){
   var fechaEl=document.getElementById('hc-fecha');
   if(!iniEl||!finEl) return;
   var ini=iniEl.value||'09:00', fin=finEl.value||'10:00';
-  var [ih,im]=ini.split(':').map(Number);
-  var [fh,fm]=fin.split(':').map(Number);
+  var parts_i=ini.split(':').map(Number), parts_f=fin.split(':').map(Number);
+  var ih=parts_i[0],im=parts_i[1],fh=parts_f[0],fm=parts_f[1];
   var mins=(fh*60+fm)-(ih*60+im);
   if(mins<=0){var err=document.getElementById('hc-error');if(err){err.style.display='flex';err.textContent='⚠️ La hora de fin debe ser posterior al inicio';setTimeout(function(){err.style.display='none';},3000);}return;}
   var h=Math.round(mins/60*100)/100;
   var desc=(document.getElementById('hc-desc')||{}).value||'';
   var proy=(document.getElementById('hc-proy')||{}).value||'';
   var fecha=fechaEl?fechaEl.value:getFechaStr(new Date());
-  var horaObj={email:cu.email,proyecto:proy,descripcion:desc,horas:h,fecha:fecha,ini:ini,fin:fin,tipo:'manual',id:'local_'+Date.now()};
-  // Añadir localmente de inmediato para feedback instantáneo
+  var horaObj={email:cu.email,proyecto:proy,descripcion:desc,horas:h,fecha:fecha,ini:ini,fin:fin,id:'local_'+Date.now()};
+  // Actualizar TEAM inmediatamente (no esperar callback async)
+  var me=TEAM.find(function(t){return t.email===cu.email;});
+  if(me) me.horas=Math.round((me.horas+h)*100)/100;
+  // Añadir a allHoras y userHoras al instante para feedback inmediato
+  allHoras.unshift(horaObj);
   userHoras.unshift(horaObj);
   renderHCRegistrar(); renderHCHist(); renderHDash(); renderDash(); renderEH();
   if(document.getElementById('hc-desc'))document.getElementById('hc-desc').value='';
   // Guardar en Supabase en segundo plano
-  DB.insertHora({email:cu.email,proyecto:proy,descripcion:desc,horas:h,fecha:fecha,hora_ini:ini,hora_fin:fin,tipo:'manual'}).then(function(data){
+  DB.insertHora({email:cu.email,proyecto:proy,descripcion:desc,horas:h,fecha:fecha,hora_ini:ini,hora_fin:fin}).then(function(data){
     if(data){
-      // Actualizar el id local con el real de Supabase
-      horaObj.id=data.id;
+      horaObj.id=data.id; // actualizar id local → id real (referencia en array, se actualiza sola)
+      if(me) DB.updatePerfil(cu.email,{horas:me.horas});
+      updateBadgesEspeciales();
+    } else {
+      // INSERT fallido → revertir cambios locales y mostrar error
+      var idx=userHoras.findIndex(function(x){return x===horaObj;});
+      if(idx>=0) userHoras.splice(idx,1);
+      var aIdx=allHoras.findIndex(function(x){return x===horaObj;});
+      if(aIdx>=0) allHoras.splice(aIdx,1);
+      if(me) me.horas=Math.round(Math.max(0,me.horas-h)*100)/100;
+      var errEl=document.getElementById('hc-error');
+      if(errEl){errEl.style.display='flex';errEl.textContent='⚠️ Error al guardar en la base de datos. Revisa la consola.';setTimeout(function(){errEl.style.display='none';},5000);}
+      renderHCRegistrar(); renderHCHist(); renderHDash(); renderDash();
     }
-    var me=TEAM.find(function(t){return t.email===cu.email;});
-    if(me){me.horas=Math.round((me.horas+h)*100)/100;DB.updatePerfil(cu.email,{horas:me.horas});}
-    updateBadgesEspeciales();
   }).catch(function(e){
     console.error('Error guardando hora:', e);
+    var idx=userHoras.findIndex(function(x){return x===horaObj;});
+    if(idx>=0) userHoras.splice(idx,1);
+    var aIdx=allHoras.findIndex(function(x){return x===horaObj;});
+    if(aIdx>=0) allHoras.splice(aIdx,1);
+    if(me) me.horas=Math.round(Math.max(0,me.horas-h)*100)/100;
+    var errEl=document.getElementById('hc-error');
+    if(errEl){errEl.style.display='flex';errEl.textContent='⚠️ Error de conexión al guardar.';setTimeout(function(){errEl.style.display='none';},5000);}
+    renderHCRegistrar(); renderHCHist(); renderHDash(); renderDash();
   });
 }
 
@@ -3219,19 +3274,42 @@ function toggleTimer(){
     var desc=(document.getElementById('hc-desc')||{}).value||'';
     var proy=(document.getElementById('hc-proy')||{}).value||'';
     var fecha=getFechaStr(new Date());
-    var horaObj={email:cu.email,proyecto:proy,descripcion:desc,horas:horas,fecha:fecha,ini:ini,fin:fin,tipo:'timer',id:'local_'+Date.now()};
+    var horaObj={email:cu.email,proyecto:proy,descripcion:desc,horas:horas,fecha:fecha,ini:ini,fin:fin,id:'local_'+Date.now()};
+    // Actualizar TEAM inmediatamente
+    var me=TEAM.find(function(t){return t.email===cu.email;});
+    if(me) me.horas=Math.round((me.horas+horas)*100)/100;
+    // Añadir a ambos arrays al instante
+    allHoras.unshift(horaObj);
     userHoras.unshift(horaObj);
-    DB.insertHora({email:cu.email,proyecto:proy,descripcion:desc,horas:horas,fecha:fecha,hora_ini:ini,hora_fin:fin,tipo:'timer'}).then(function(data){
-      if(data)horaObj.id=data.id;
-      var me=TEAM.find(function(t){return t.email===cu.email;});
-      if(me){me.horas=Math.round((me.horas+horas)*100)/100;DB.updatePerfil(cu.email,{horas:me.horas});}
-      updateBadgesEspeciales();
-    });
     if(btn){btn.textContent='⏱️';btn.title='Timer';}
     if(row)row.style.display='none';
     var disp=document.getElementById('hc-timer-display');if(disp)disp.textContent='00:00:00';
     _timerInicio=null;
     renderHCRegistrar(); renderHCHist(); renderHDash(); renderDash(); renderEH();
+    DB.insertHora({email:cu.email,proyecto:proy,descripcion:desc,horas:horas,fecha:fecha,hora_ini:ini,hora_fin:fin}).then(function(data){
+      if(data){
+        horaObj.id=data.id;
+        if(me) DB.updatePerfil(cu.email,{horas:me.horas});
+        updateBadgesEspeciales();
+      } else {
+        var idx=userHoras.findIndex(function(x){return x===horaObj;});
+        if(idx>=0) userHoras.splice(idx,1);
+        var aIdx=allHoras.findIndex(function(x){return x===horaObj;});
+        if(aIdx>=0) allHoras.splice(aIdx,1);
+        if(me) me.horas=Math.round(Math.max(0,me.horas-horas)*100)/100;
+        var errEl=document.getElementById('hc-error');
+        if(errEl){errEl.style.display='flex';errEl.textContent='⚠️ Error al guardar en la base de datos.';setTimeout(function(){errEl.style.display='none';},5000);}
+        renderHCRegistrar(); renderHCHist(); renderHDash(); renderDash();
+      }
+    }).catch(function(e){
+      console.error('Error guardando timer:', e);
+      var idx=userHoras.findIndex(function(x){return x===horaObj;});
+      if(idx>=0) userHoras.splice(idx,1);
+      var aIdx=allHoras.findIndex(function(x){return x===horaObj;});
+      if(aIdx>=0) allHoras.splice(aIdx,1);
+      if(me) me.horas=Math.round(Math.max(0,me.horas-horas)*100)/100;
+      renderHCRegistrar(); renderHCHist(); renderHDash(); renderDash();
+    });
   }
 }
 
@@ -3303,6 +3381,9 @@ function delHora(btn){
   var me=TEAM.find(function(t){return t.email===cu.email;});
   if(me){me.horas=Math.max(0,Math.round((me.horas-h.horas)*100)/100);DB.updatePerfil(cu.email,{horas:me.horas});}
   userHoras.splice(idx,1);
+  // Eliminar también de allHoras
+  var aIdx=allHoras.findIndex(function(x){return String(x.id)===String(id);});
+  if(aIdx>=0) allHoras.splice(aIdx,1);
   renderHCRegistrar(); renderHCHist(); renderHDash(); renderDash(); renderEH();
 }
 
@@ -3316,8 +3397,8 @@ function renderHCHist(){
     var durStr=Math.floor(mins/60)+'h '+String(mins%60).padStart(2,'0')+'m';
     return '<tr>'
       +'<td>'+dateStr+'</td>'
-      +'<td>'+(h.descripcion||'—')+'</td>'
       +'<td>'+(h.proyecto||'—')+'</td>'
+      +'<td>'+(h.descripcion||'—')+'</td>'
       +'<td style="color:var(--text3)">'+(h.ini||'—')+'</td>'
       +'<td style="color:var(--text3)">'+(h.fin||'—')+'</td>'
       +'<td style="font-weight:600;color:var(--purple)">'+durStr+'</td>'
@@ -3360,15 +3441,8 @@ function renderHDash(){
     desde=dd&&dd.value?new Date(dd.value+'T00:00:00'):getLunes(now);
     hasta=dh&&dh.value?new Date(dh.value+'T23:59:59'):getDomingo(now);
   }
-  // Fuente de datos
-  var allH=_hdFilter==='equipo'
-    ? userHoras.concat(TEAM.filter(function(t){return !cu||t.email!==cu.email;}).map(function(t){return {email:t.email,horas:t.horas,fecha:getFechaStr(now),proyecto:'',descripcion:''};}).filter(function(){return false;}))
-    : userHoras;
-  // Para equipo usamos todos los registros que tengamos
-  if(_hdFilter==='equipo'){
-    // Con Supabase sync tendríamos todas las horas; por ahora usamos TEAM
-    allH=userHoras; // se actualizará con syncHoras cuando otros registren
-  }
+  // Fuente de datos: equipo → allHoras (todos los miembros, real-time), yo → userHoras
+  var allH=_hdFilter==='equipo' ? allHoras : userHoras;
   var src=allH.filter(function(h){var d=new Date(h.fecha+'T12:00:00');return d>=desde&&d<=hasta;});
   var hTot=Math.round(src.reduce(function(s,h){return s+h.horas;},0)*100)/100;
   var diasActivos=Object.keys(src.reduce(function(o,h){o[h.fecha]=1;return o;},{})).length;
