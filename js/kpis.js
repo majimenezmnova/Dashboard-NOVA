@@ -3,7 +3,7 @@ var kpis = [];
 var _kpisTab = 'kpis-general';
 var _kpiCharts = {};
 
-var _METAS = {bp:66, lp:18, fac:15000, ben:7500};
+var _METAS = {bp:66, lp:18, fac:15000, ben:7500, obvs:150};
 var _KPICFG = {
   bp:   {ico:'📚', lbl:'BookPoints',     col:'#534AB7', bg:'#EEEDFE'},
   obvs: {ico:'🏃', lbl:'OBVS',           col:'#1D9E75', bg:'#E1F5EE'},
@@ -75,7 +75,7 @@ function renderKpisGeneral() {
     {ico:'🎓',lbl:'Learning Paths',val:tot.lp,meta:metaTot.lp,col:'#EF9F27',vf:tot.lp+'',mf:metaTot.lp+''},
     {ico:'💶',lbl:'Facturación',val:tot.fac,meta:metaTot.fac,col:'#1D9E75',vf:fmt(tot.fac),mf:fmt(metaTot.fac)},
     {ico:'📈',lbl:'Beneficio',val:tot.ben,meta:metaTot.ben,col:'#534AB7',vf:fmt(tot.ben),mf:fmt(metaTot.ben)},
-    {ico:'🏃',lbl:'OBVS',val:tot.obvs,meta:0,col:'#1D9E75',vf:tot.obvs+' visitas',mf:''}
+    {ico:'🏃',lbl:'OBVS',val:tot.obvs,meta:n*_METAS.obvs,col:'#1D9E75',vf:tot.obvs+' visitas',mf:n*_METAS.obvs+' visitas'}
   ];
 
   var html='<div class="card" style="margin-bottom:10px">'
@@ -109,7 +109,7 @@ function renderKpisGeneral() {
       +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem">'
         +'<div class="av '+u.av+'" style="width:28px;height:28px;font-size:10px;flex-shrink:0">'+u.ini+'</div>'
         +'<div style="font-weight:700;font-size:13px">'+u.name+'</div>'
-        +'<div style="margin-left:auto;font-size:11px;color:var(--text3)">🏃 '+d.obvs+' OBVS</div>'
+        +'<div style="margin-left:auto;font-size:11px;color:var(--text3)">🏃 '+d.obvs+'/'+_METAS.obvs+' OBVS</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
       +[
@@ -143,7 +143,7 @@ function renderMisKpis() {
     {lbl:'Learning Paths',ico:'🎓',val:d.lp,meta:_METAS.lp,col:'#EF9F27',vf:d.lp+'',sub:'meta: '+_METAS.lp},
     {lbl:'Facturación',ico:'💶',val:d.fac,meta:_METAS.fac,col:'#1D9E75',vf:fmt(d.fac),sub:'meta: '+fmt(_METAS.fac)},
     {lbl:'Beneficio',ico:'📈',val:d.ben,meta:_METAS.ben,col:'#534AB7',vf:fmt(d.ben),sub:'meta: '+fmt(_METAS.ben)},
-    {lbl:'OBVS',ico:'🏃',val:d.obvs,meta:0,col:'#1D9E75',vf:d.obvs+'',sub:'visitas'}
+    {lbl:'OBVS',ico:'🏃',val:d.obvs,meta:_METAS.obvs,col:'#1D9E75',vf:d.obvs+'',sub:'meta: '+_METAS.obvs}
   ];
 
   el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
@@ -195,7 +195,7 @@ function renderKpisEquipo() {
       {lbl:'LP',    val:d.lp,  meta:_METAS.lp,  col:'#EF9F27', vf:d.lp+''},
       {lbl:'Fac.',  val:d.fac, meta:_METAS.fac, col:'#1D9E75', vf:fmt(d.fac)},
       {lbl:'Ben.',  val:d.ben, meta:_METAS.ben,  col:'#534AB7', vf:fmt(d.ben)},
-      {lbl:'OBVS',  val:d.obvs,meta:0,           col:'#1D9E75', vf:d.obvs+''}
+      {lbl:'OBVS',  val:d.obvs,meta:_METAS.obvs,  col:'#1D9E75', vf:d.obvs+''}
     ];
     return '<div class="card" style="margin-bottom:10px">'
       +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:.875rem">'
@@ -235,16 +235,18 @@ function renderKpisAnalisis() {
   _kpiBar('kpi-chart-ben',names,benD,_METAS.ben,'#534AB7','Beneficio por persona','€');
 
   var n=emails.length||1;
+  var obvsD=emails.map(function(e){return _getKpis(e).obvs;});
   var radarData=[
     Math.round(bpD.reduce(function(s,v){return s+v;},0)/n/_METAS.bp*100),
     Math.round(lpD.reduce(function(s,v){return s+v;},0)/n/_METAS.lp*100),
     Math.round(facD.reduce(function(s,v){return s+v;},0)/n/_METAS.fac*100),
-    Math.round(benD.reduce(function(s,v){return s+v;},0)/n/_METAS.ben*100)
+    Math.round(benD.reduce(function(s,v){return s+v;},0)/n/_METAS.ben*100),
+    Math.round(obvsD.reduce(function(s,v){return s+v;},0)/n/_METAS.obvs*100)
   ];
   var rc=document.getElementById('kpi-chart-radar');if(!rc)return;
   if(rc._chart){try{rc._chart.destroy();}catch(e){}}
   rc._chart=new Chart(rc,{type:'radar',data:{
-    labels:['BP','LP','Facturación','Beneficio'],
+    labels:['BP','LP','Facturación','Beneficio','OBVS'],
     datasets:[{label:'% objetivo',data:radarData,backgroundColor:'rgba(83,74,183,.15)',
       borderColor:'#534AB7',borderWidth:2,pointBackgroundColor:'#534AB7'}]
   },options:{responsive:true,maintainAspectRatio:false,
