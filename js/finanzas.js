@@ -403,7 +403,7 @@ function renderFinAnalisis() {
 }
 
 function swFinTab(id, el) {
-  ['ft-registrar','ft-historial','ft-proyectos','ft-analisis','ft-eurhora'].forEach(function(t){
+  ['ft-registrar','ft-historial','ft-proyectos','ft-analisis','ft-eurhora','ft-saldos'].forEach(function(t){
     var e=document.getElementById(t);if(e)e.style.display='none';
   });
   var te=document.getElementById(id);if(te)te.style.display='block';
@@ -418,5 +418,51 @@ function swFinTab(id, el) {
     setTimeout(renderFinAnalisis, 60);
   }
   if(id==='ft-eurhora'){renderEH();}
+  if(id==='ft-saldos'){renderFinSaldos();}
+}
+
+function renderFinSaldos() {
+  var el = document.getElementById('ft-saldos'); if(!el) return;
+  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">';
+  Object.keys(USERS).forEach(function(email) {
+    var u = USERS[email];
+    var ing = 0, gas = 0;
+    movimientos.forEach(function(m) {
+      if(!m.personas||!m.personas.length||m.personas.indexOf(email)<0) return;
+      var share = m.importe / m.personas.length;
+      if(m.tipo==='ingreso') ing += share; else gas += share;
+    });
+    var saldo = ing - gas;
+    var col = saldo>=0?'#1D9E75':'#E24B4A';
+    var bg  = saldo>=0?'#E1F5EE':'#FCEBEB';
+    var fmt = function(n){return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});};
+    html += '<div class="card">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:.875rem">'
+        +'<div class="av '+u.av+'" style="width:36px;height:36px;font-size:13px;flex-shrink:0">'+u.ini+'</div>'
+        +'<div style="font-size:14px;font-weight:700">'+u.name+'</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:.875rem">'
+        +'<div style="display:flex;justify-content:space-between;font-size:13px">'
+          +'<span style="color:var(--text3)">Ingresos atribuidos</span>'
+          +'<span style="color:#1D9E75;font-weight:600">+'+fmt(ing)+'€</span>'
+        +'</div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:13px">'
+          +'<span style="color:var(--text3)">Gastos atribuidos</span>'
+          +'<span style="color:#E24B4A;font-weight:600">-'+fmt(gas)+'€</span>'
+        +'</div>'
+      +'</div>'
+      +'<div style="border-top:1px solid var(--border);padding-top:.625rem;display:flex;justify-content:space-between;align-items:center">'
+        +'<span style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em">Saldo actual</span>'
+        +'<div style="background:'+bg+';color:'+col+';font-size:18px;font-weight:700;padding:4px 12px;border-radius:var(--r)">'
+          +(saldo>=0?'+':'')+fmt(saldo)+'€'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  });
+  html += '</div>'
+    +'<div style="margin-top:12px;padding:.875rem;background:var(--bg2);border-radius:var(--r);font-size:12px;color:var(--text3)">'
+    +'💡 Saldo basado en movimientos de Finanzas atribuidos a cada persona. Próximamente: saldo inicial y gastos fijos recurrentes.'
+    +'</div>';
+  el.innerHTML = html;
 }
 
