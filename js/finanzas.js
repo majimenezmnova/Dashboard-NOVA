@@ -55,14 +55,17 @@ function setFinTipo(tipo) {
   var ib = document.getElementById('fin-tipo-ing');
   var gb = document.getElementById('fin-tipo-gas');
   var sb = document.getElementById('fin-submit-btn');
+  var opRow = document.getElementById('fin-operativo-row');
   if(tipo==='ingreso') {
     if(ib){ib.style.background='#E1F5EE';ib.style.color='#085041';}
     if(gb){gb.style.background='var(--bg2)';gb.style.color='var(--text2)';}
     if(sb){sb.style.background='#E1F5EE';sb.style.color='#085041';sb.innerHTML='➕ Registrar ingreso';}
+    if(opRow)opRow.style.display='none';
   } else {
     if(ib){ib.style.background='var(--bg2)';ib.style.color='var(--text2)';}
     if(gb){gb.style.background='#FCEBEB';gb.style.color='#A32D2D';}
     if(sb){sb.style.background='#FCEBEB';sb.style.color='#A32D2D';sb.innerHTML='➕ Registrar gasto';}
+    if(opRow)opRow.style.display='block';
   }
 }
 
@@ -78,7 +81,7 @@ function saveMovimiento() {
     importe: imp,
     proyecto: proy,
     concepto: conc,
-    categoria: document.getElementById('fin-categoria').value.trim()||'General',
+    categoria: (_finTipo==='gasto' && document.getElementById('fin-operativo') && document.getElementById('fin-operativo').checked) ? 'Operativo' : (document.getElementById('fin-categoria').value.trim()||'General'),
     fecha: document.getElementById('fin-fecha').value||new Date().toISOString().slice(0,10),
     personas: _finPersonas.slice(),
     factura: document.getElementById('fin-factura').value
@@ -110,6 +113,7 @@ function saveMovimiento() {
   document.getElementById('fin-categoria').value='';
   _finPersonas=[];
   document.querySelectorAll('.fin-pchip').forEach(function(c){c.classList.remove('on');});
+  var opEl=document.getElementById('fin-operativo');if(opEl)opEl.checked=false;
   updateFinDivision();
   renderFinanzas();
   renderDash(); renderFin(); renderEH();

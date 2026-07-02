@@ -502,6 +502,13 @@
               <div id="fin-personas-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:5px"></div>
               <div style="font-size:11px;color:var(--text2);margin-top:5px" id="fin-division-lbl"></div>
             </div>
+            <!-- Toggle gasto operativo (solo visible en modo gasto) -->
+            <div id="fin-operativo-row" style="display:none;margin-bottom:.75rem">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text2)">
+                <input type="checkbox" id="fin-operativo" style="width:16px;height:16px;cursor:pointer">
+                Gasto operativo <span style="color:var(--text3);font-size:11px">(Hostinger, IA, etc. — no cuenta en KPI beneficio)</span>
+              </label>
+            </div>
             <div id="fin-error" style="display:none;color:#A32D2D;font-size:12px;margin-bottom:8px;align-items:center;gap:5px">⚠️ Completa al menos importe, proyecto y concepto</div>
             <button id="fin-submit-btn" onclick="saveMovimiento()" style="width:100%;padding:10px;border-radius:var(--r);border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;background:#E1F5EE;color:#085041;display:flex;align-items:center;justify-content:center;gap:6px">➕ Registrar ingreso</button>
           </div>
@@ -601,21 +608,21 @@
       <!-- KPIs -->
       <div class="page" id="page-kpis">
         <div class="tabs">
-          <div class="tab on" onclick="swKpiTab('kpis-registrar',this)">➕ Registrar</div>
+          <div class="tab on" onclick="swKpiTab('kpis-registrar',this)">➕ Mis KPIs</div>
           <div class="tab" onclick="swKpiTab('kpis-equipo',this)">👥 Equipo</div>
+          <div class="tab" onclick="swKpiTab('kpis-analisis',this)">📈 Análisis</div>
           <div class="tab" onclick="swKpiTab('kpis-historial',this)">📋 Historial</div>
         </div>
 
-        <!-- TAB REGISTRAR -->
+        <!-- TAB MIS KPIs -->
         <div id="kpis-registrar">
-          <div class="card">
-            <div class="ct">Mis KPIs</div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="kpis-mis-totales"></div>
-          </div>
+          <div id="kpis-mis-totales"></div>
           <div class="card">
             <div class="ct">Registrar</div>
-            <div class="fg"><label>Nota (opcional)</label><input id="kpi-nota" type="text" placeholder="Ej: Acabé Zero to One, visita a cliente..."></div>
-            <div class="fg"><label>Fecha</label><input id="kpi-fecha" type="date"></div>
+            <div class="fr" style="margin-bottom:.75rem">
+              <div class="fg" style="margin-bottom:0"><label>Nota (opcional)</label><input id="kpi-nota" type="text" placeholder="Ej: Acabé Zero to One, visita a cliente..."></div>
+              <div class="fg" style="margin-bottom:0"><label>Fecha</label><input id="kpi-fecha" type="date"></div>
+            </div>
             <div style="margin-bottom:.875rem">
               <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📚 BookPoint</div>
               <div style="display:flex;gap:8px">
@@ -633,9 +640,19 @@
 
         <!-- TAB EQUIPO -->
         <div id="kpis-equipo" style="display:none">
-          <div class="card">
-            <div class="ct">KPIs del equipo</div>
-            <div id="kpis-equipo-list"></div>
+          <div id="kpis-equipo-list"></div>
+        </div>
+
+        <!-- TAB ANÁLISIS -->
+        <div id="kpis-analisis" style="display:none">
+          <div id="kpis-analisis-wrap">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div class="card" style="margin-bottom:0"><div style="position:relative;height:180px"><canvas id="kpi-chart-bp"></canvas></div></div>
+              <div class="card" style="margin-bottom:0"><div style="position:relative;height:180px"><canvas id="kpi-chart-lp"></canvas></div></div>
+              <div class="card" style="margin-bottom:0"><div style="position:relative;height:180px"><canvas id="kpi-chart-fac"></canvas></div></div>
+              <div class="card" style="margin-bottom:0"><div style="position:relative;height:180px"><canvas id="kpi-chart-ben"></canvas></div></div>
+            </div>
+            <div class="card" id="kpis-radar-wrap"><div style="position:relative;height:260px"><canvas id="kpi-chart-radar"></canvas></div></div>
           </div>
         </div>
 
