@@ -224,11 +224,22 @@
             <span style="margin-left:auto;font-weight:700" id="rep-countdown"></span>
           </div>
 
-          <!-- Proyectos dinámicos: puede añadir uno por proyecto -->
-          <div id="rep-proyectos-container"></div>
-          <button class="btn btn-sm" onclick="addRepProy()" style="margin-bottom:1rem">➕ A&ntilde;adir otro proyecto</button>
+          <!-- Reporte del período (proyecto + contenido unificado) -->
+          <div class="card">
+            <div class="ct">&#128203; Reporte del per&iacute;odo</div>
+            <div class="fg"><label>Proyecto <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
+              <select id="rep-proy-sel" style="width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:'Inter',sans-serif">
+                <option value="">Sin proyecto / General</option>
+              </select>
+            </div>
+            <div class="fg"><label>Avances realizados <span style="color:var(--red)">*</span></label><textarea id="rep-av" placeholder="&#191;Qu&eacute; has hecho este per&iacute;odo? S&eacute; concreto..." style="width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:'Inter',sans-serif;min-height:80px;resize:vertical"></textarea></div>
+            <div class="fg"><label>Logro destacado</label><input id="rep-log" type="text" placeholder="El resultado del que m&aacute;s orgulloso est&aacute;s" style="width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:'Inter',sans-serif"></div>
+            <div class="fg"><label>Bloqueos actuales</label><textarea id="rep-bl" placeholder="&#191;Qu&eacute; te est&aacute; frenando?" style="width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:'Inter',sans-serif;min-height:60px;resize:vertical"></textarea></div>
+            <div class="fg"><label>Aprendizajes</label><textarea id="rep-apr" placeholder="&#191;Qu&eacute; has aprendido?" style="width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:'Inter',sans-serif;min-height:60px;resize:vertical"></textarea></div>
+            <div class="fg" style="margin-bottom:0"><label>Pr&oacute;ximos pasos</label><textarea id="rep-prox" placeholder="&#191;Qu&eacute; vas a hacer el siguiente per&iacute;odo?" style="width:100%;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;font-family:'Inter',sans-serif;min-height:60px;resize:vertical"></textarea></div>
+          </div>
 
-          <!-- Campos globales del período -->
+          <!-- Reflexi&oacute;n del per&iacute;odo -->
           <div class="card">
             <div class="ct">Reflexi&oacute;n del per&iacute;odo</div>
             <div class="fg"><label>Estado de &aacute;nimo general</label>
@@ -259,10 +270,9 @@
           <!-- N&uacute;meros del per&iacute;odo -->
           <div class="card">
             <div class="ct">N&uacute;meros del per&iacute;odo</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
               <div class="fg"><label>Importe facturado (&euro; con IVA)</label><input id="rep-imp" type="number" placeholder="0" min="0"></div>
               <div class="fg"><label>Beneficio neto (&euro; sin IVA)</label><input id="rep-benef" type="number" placeholder="0" min="0"></div>
-              <div class="fg"><label>Horas dedicadas</label><input id="rep-h" type="number" placeholder="24" min="0" step="0.5"></div>
               <div class="fg"><label>Reuni&oacute;n con mentor&iacute;a(s)</label><input id="rep-mentorias" type="number" placeholder="0" min="0"></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">

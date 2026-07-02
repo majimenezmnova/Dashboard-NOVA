@@ -48,7 +48,7 @@ function renderReportesEquipo() {
 
   var REACCIONES = ['👍','🔥','💪','🎉','❤️','👀'];
 
-  el.innerHTML = src.map(function(r) {
+  el.innerHTML = src.map(function(r, idx) {
     var u = USERS[r.autor_email] || {name:'?', ini:'?', av:'av0'};
     var comentarios = equipoComentarios.filter(function(c){return c.rep_id === r.id;});
     var reacciones = {};
@@ -77,6 +77,21 @@ function renderReportesEquipo() {
         +'</div>';
     }).join('');
 
+    var extraHtml=''
+      +(r.proximos?'<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:.04em">Próximos pasos</span><br>'+r.proximos+'</div>':'')
+      +(r.feedback?'<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:.04em">Feedback al equipo</span><br>'+r.feedback+'</div>':'')
+      +(r.ayuda?'<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.04em">Ayuda</span><br>'+r.ayuda+(r.ayuda_quien?' <em>('+r.ayuda_quien+')</em>':'')+'</div>':'')
+      +(r.riesgo?'<div><span style="font-size:11px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.04em">⚠ Riesgo</span><br>'+r.riesgo+'</div>':'');
+    var numsHtml='';
+    if(r.importe||r.beneficio||r.mentorias||(r.reunExp||0)+(r.reunVal||0)+(r.reunVta||0)||(r.asLegal||0)+(r.asFin||0)+(r.asTech||0)){
+      var nums2=[];
+      if(r.importe)nums2.push('<span class="tag tt">💶 '+r.importe.toLocaleString('es-ES')+'€ fact.</span>');
+      if(r.beneficio)nums2.push('<span class="tag" style="background:var(--green-l);color:var(--green)">✓ '+r.beneficio.toLocaleString('es-ES')+'€ benef.</span>');
+      if(r.mentorias)nums2.push('<span class="tag" style="background:var(--purple-l);color:var(--purple)">🧠 '+r.mentorias+' mentor.</span>');
+      var reu2=(r.reunExp||0)+(r.reunVal||0)+(r.reunVta||0);
+      if(reu2)nums2.push('<span class="tag" style="background:var(--blue-l);color:var(--blue)">🤝 '+reu2+' reun.</span>');
+      numsHtml='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.875rem;padding-top:.625rem;border-top:1px solid var(--border)">'+nums2.join('')+'</div>';
+    }
     return '<div class="card" style="margin-bottom:10px">'
       +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:.875rem">'
         +'<div class="av '+u.av+'" style="width:36px;height:36px;font-size:13px;flex-shrink:0">'+u.ini+'</div>'
@@ -84,7 +99,7 @@ function renderReportesEquipo() {
           +'<div style="font-size:14px;font-weight:700">'+u.name+'</div>'
           +'<div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap">'
             +'<span class="tag tp" style="font-size:10px">'+r.periodo+'</span>'
-            +'<span class="tag tt" style="font-size:10px">'+r.proyecto+'</span>'
+            +(r.proyecto?'<span class="tag tt" style="font-size:10px">'+r.proyecto+'</span>':'')
             +(r.mood?'<span style="font-size:14px">'+r.mood+'</span>':'')
           +'</div>'
         +'</div>'
@@ -96,11 +111,9 @@ function renderReportesEquipo() {
         +(r.bloqueos?'<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:600;color:var(--coral);text-transform:uppercase;letter-spacing:.04em">⚠ Bloqueos</span><br>'+r.bloqueos+'</div>':'')
         +(r.aprendizajes?'<div><span style="font-size:11px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:.04em">Aprendizajes</span><br>'+r.aprendizajes+'</div>':'')
       +'</div>'
-      +(r.horas||r.importe||r.beneficio?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.875rem;padding-top:.625rem;border-top:1px solid var(--border)">'
-        +(r.horas?'<span class="tag" style="background:var(--bg3);color:var(--text2)">⏱ '+r.horas+'h</span>':'')
-        +(r.importe?'<span class="tag tt">💶 '+r.importe.toLocaleString('es-ES')+'€ fact.</span>':'')
-        +(r.beneficio?'<span class="tag" style="background:var(--green-l);color:var(--green)">✓ '+r.beneficio.toLocaleString('es-ES')+'€ benef.</span>':'')
-        +'</div>':'')
+      +(extraHtml?'<div id="re-ex-'+idx+'" style="display:none;font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:.875rem;padding-top:.625rem;border-top:1px solid var(--border)">'+extraHtml+'</div>':'')
+      +numsHtml
+      +(extraHtml?'<button onclick="toggleREExtra('+idx+',this)" style="font-size:11px;color:var(--purple);background:none;border:none;cursor:pointer;padding:0;margin-bottom:.75rem">Ver reporte completo ↓</button><br>':'')
       +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.75rem">'+reacHtml+'</div>'
       +(comsHtml?'<div style="margin-bottom:.75rem;padding:.625rem;background:var(--bg3);border-radius:var(--r)">'+comsHtml+'</div>':'')
       +'<div style="display:flex;gap:8px;align-items:center">'
@@ -110,6 +123,13 @@ function renderReportesEquipo() {
       +'</div>'
       +'</div>';
   }).join('');
+}
+
+function toggleREExtra(idx, btn) {
+  var el = document.getElementById('re-ex-'+idx); if(!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if(btn) btn.textContent = open ? 'Ver reporte completo ↓' : 'Cerrar ↑';
 }
 
 function reEnterCheck(e, input) {
