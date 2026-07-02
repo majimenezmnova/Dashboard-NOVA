@@ -98,6 +98,22 @@ const DB = {
   async deleteMovimiento(id) {
     const { error } = await sb.from('movimientos').delete().eq('id', id);
     if(error) console.error('deleteMovimiento error:', error);
+  },
+
+  // KPIs
+  async getKpis() {
+    const { data, error } = await sb.from('kpis').select('*').order('ts', { ascending: false });
+    if(error) { console.error('getKpis error:', error); return []; }
+    return data || [];
+  },
+  async insertKpi(k) {
+    const { data, error } = await sb.from('kpis').insert(k).select().single();
+    if(error) { console.error('insertKpi error:', error); return null; }
+    return data;
+  },
+  async deleteKpi(id) {
+    const { error } = await sb.from('kpis').delete().eq('id', id);
+    if(error) console.error('deleteKpi error:', error);
   }
 };
 
@@ -110,6 +126,7 @@ function initRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'reportes' },   () => syncReportes())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'comentarios' },() => syncComentarios())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'movimientos' },() => syncMovimientos())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'kpis' },       () => syncKpis())
     .subscribe();
 }
 
@@ -209,8 +226,18 @@ async function syncMovimientos() {
   renderFinanzas(); renderDash();
 }
 
+async function syncKpis() {
+  var data = await DB.getKpis();
+  kpis = data.map(function(k) {
+    return {id:k.id, email:k.email, tipo:k.tipo, puntos:k.puntos||1, nota:k.nota||'', fecha:k.fecha, ts:k.ts||0};
+  });
+  if(document.getElementById('page-kpis') && document.getElementById('page-kpis').classList.contains('on')) {
+    renderKpisPage();
+  }
+}
+
 // ══ CARGA INICIAL ══
 async function cargarTodo() {
-  await Promise.all([syncPerfiles(), syncProyectos(), syncHoras(), syncReportes(), syncComentarios(), syncMovimientos()]);
+  await Promise.all([syncPerfiles(), syncProyectos(), syncHoras(), syncReportes(), syncComentarios(), syncMovimientos(), syncKpis()]);
   renderAll();
 }

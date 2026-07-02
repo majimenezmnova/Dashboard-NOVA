@@ -45,6 +45,7 @@
       <div class="ni" onclick="go('mis-horas',this)">⏱️ Mis horas</div>
       <div class="ni" onclick="go('proyectos',this)">🚀 Proyectos</div>
       <div class="ni" onclick="go('finanzas',this)">💰 Finanzas</div>
+      <div class="ni" onclick="go('kpis',this)">📊 KPIs</div>
       <div id="nav-junta" style="display:none">
         <div class="nav-sec">👑 Junta directiva</div>
         <div class="ni" onclick="go('equipo',this)">👥 Vista del equipo</div>
@@ -597,6 +598,56 @@
 
       </div>
 
+      <!-- KPIs -->
+      <div class="page" id="page-kpis">
+        <div class="tabs">
+          <div class="tab on" onclick="swKpiTab('kpis-registrar',this)">➕ Registrar</div>
+          <div class="tab" onclick="swKpiTab('kpis-equipo',this)">👥 Equipo</div>
+          <div class="tab" onclick="swKpiTab('kpis-historial',this)">📋 Historial</div>
+        </div>
+
+        <!-- TAB REGISTRAR -->
+        <div id="kpis-registrar">
+          <div class="card">
+            <div class="ct">Mis KPIs</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px" id="kpis-mis-totales"></div>
+          </div>
+          <div class="card">
+            <div class="ct">Registrar</div>
+            <div class="fg"><label>Nota (opcional)</label><input id="kpi-nota" type="text" placeholder="Ej: Acabé Zero to One, visita a cliente..."></div>
+            <div class="fg"><label>Fecha</label><input id="kpi-fecha" type="date"></div>
+            <div style="margin-bottom:.875rem">
+              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📚 BookPoint</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn" onclick="saveKpi('bp',1)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+1 pt · Corto</button>
+                <button class="btn" onclick="saveKpi('bp',2)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+2 pts · Medio</button>
+                <button class="btn" onclick="saveKpi('bp',3)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+3 pts · Largo</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <button class="btn" onclick="saveKpi('obvs',1)" style="background:#E1F5EE;color:#085041;border:none;padding:.75rem;font-size:14px">🏃 +1 OBVS</button>
+              <button class="btn" onclick="saveKpi('lp',1)" style="background:#FAEEDA;color:#7A4F0D;border:none;padding:.75rem;font-size:14px">🎓 +1 LP</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB EQUIPO -->
+        <div id="kpis-equipo" style="display:none">
+          <div class="card">
+            <div class="ct">KPIs del equipo</div>
+            <div id="kpis-equipo-list"></div>
+          </div>
+        </div>
+
+        <!-- TAB HISTORIAL -->
+        <div id="kpis-historial" style="display:none">
+          <div class="card">
+            <div class="ct">Mi historial</div>
+            <div id="kpis-hist-list"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- EQUIPO -->
       <div class="page" id="page-equipo">
         <div class="sec-hdr">
@@ -709,6 +760,7 @@
 <script src="js/equipo.js"></script>
 <script src="js/finanzas.js"></script>
 <script src="js/reportes-equipo.js"></script>
+<script src="js/kpis.js"></script>
 <script src="js/init.js"></script>
 
 </body>

@@ -7,7 +7,7 @@ function toggleGrp(id,el){
 }
 
 // NAV
-var PTITLES={dashboard:'Dashboard',ranking:'Ranking & Badges','nuevo-reporte':'Nuevo reporte','mis-reportes':'📄 Mis reportes','reportes-equipo':'💬 Reportes del equipo','mis-horas':'Mis horas',proyectos:'Proyectos',finanzas:'Finanzas',equipo:'Vista del equipo',informe:'Informe global'};
+var PTITLES={dashboard:'Dashboard',ranking:'Ranking & Badges','nuevo-reporte':'Nuevo reporte','mis-reportes':'📄 Mis reportes','reportes-equipo':'💬 Reportes del equipo','mis-horas':'Mis horas',proyectos:'Proyectos',finanzas:'Finanzas',kpis:'KPIs',equipo:'Vista del equipo',informe:'Informe global'};
 function go(id,el){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('act');});
@@ -21,6 +21,7 @@ function go(id,el){
   if(id==='equipo')setTimeout(renderEquipo,50);
   if(id==='reportes-equipo')setTimeout(function(){initReportesEquipo();},50);
   if(id==='finanzas')setTimeout(function(){initFinanzas();renderFinanzas();},50);
+  if(id==='kpis')setTimeout(renderKpisPage,50);
   if(id==='nuevo-reporte')setTimeout(initRepPage,50);
   if(id==='informe')setTimeout(renderInforme,50);
 }
