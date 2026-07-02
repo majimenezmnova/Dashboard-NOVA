@@ -118,8 +118,6 @@ function saveRep(){
   var proy=(document.getElementById('rep-proy-sel')||{}).value||'';
   var bl=(document.getElementById('rep-bl')||{}).value||'';
   var bloqueoActual=bl.trim().length>3;
-  var imp=parseFloat(document.getElementById('rep-imp').value)||0;
-  var benef=parseFloat(document.getElementById('rep-benef').value)||0;
   var mentorias=parseInt(document.getElementById('rep-mentorias').value)||0;
   var asLegal=parseInt(document.getElementById('rep-asesoria-legal').value)||0;
   var asFin=parseInt(document.getElementById('rep-asesoria-fin').value)||0;
@@ -144,7 +142,7 @@ function saveRep(){
     aprendizajes:(document.getElementById('rep-apr')||{}).value||'',
     proximos:(document.getElementById('rep-prox')||{}).value||'',
     feedback:fb,ayuda:ayudaDesc,ayuda_quien:ayudaQuien,riesgo:rsk,
-    horas:0,importe:imp,beneficio:benef,
+    horas:0,importe:0,beneficio:0,
     mentorias:mentorias,asLegal:asLegal,asFin:asFin,asTech:asTech,
     reunExp:reunExp,reunVal:reunVal,reunVta:reunVta
   };
@@ -154,7 +152,7 @@ function saveRep(){
     mood:r.mood||'',avances:r.avances||'',logro:r.logro||'',bloqueos:r.bloqueos||'',
     aprendizajes:r.aprendizajes||'',proximos:r.proximos||'',feedback:r.feedback||'',
     ayuda:r.ayuda||'',ayuda_quien:r.ayuda_quien||'',riesgo:r.riesgo||'',
-    horas:0,importe:r.importe||0,beneficio:r.beneficio||0,
+    horas:0,importe:0,beneficio:0,
     mentorias:r.mentorias||0,as_legal:r.asLegal||0,as_fin:r.asFin||0,as_tech:r.asTech||0,
     reun_exp:r.reunExp||0,reun_val:r.reunVal||0,reun_vta:r.reunVta||0,
     ts:Date.now()
@@ -163,8 +161,6 @@ function saveRep(){
     me.reportado=true;
     me.reportado_count=(me.reportado_count||0)+1;
     me.racha=(me.racha||0)+1;
-    if(imp)me.ingresos+=imp;
-    if(benef)me.beneficio=(me.beneficio||0)+benef;
     if(mentorias)me.mentorias_total=(me.mentorias_total||0)+mentorias;
     if(asLegal||asFin||asTech)me.asesorias_total=(me.asesorias_total||0)+asLegal+asFin+asTech;
     var totalReu=(reunExp||0)+(reunVal||0)+(reunVta||0);
@@ -174,7 +170,6 @@ function saveRep(){
     me.badge_tuvo_bloqueo=bloqueoActual;
     me.bloqueo=bloqueoActual?bl:'';
     DB.updatePerfil(cu.email,{
-      ingresos:me.ingresos,beneficio:me.beneficio||0,
       racha:me.racha,reportado:true,reportado_count:me.reportado_count,
       mood:me.mood||null,bloqueo:me.bloqueo||'',ayuda_count:me.ayuda_count||0,
       mentorias_total:me.mentorias_total||0,asesorias_total:me.asesorias_total||0,
@@ -190,7 +185,7 @@ function saveRep(){
 }
 
 function clearRep(){
-  ['rep-fb','rep-ayuda','rep-rsk','rep-imp','rep-benef','rep-mentorias',
+  ['rep-fb','rep-ayuda','rep-rsk','rep-mentorias',
    'rep-asesoria-legal','rep-asesoria-fin','rep-asesoria-tech',
    'rep-reun-exp','rep-reun-val','rep-reun-vta',
    'rep-av','rep-log','rep-bl','rep-apr','rep-prox'].forEach(function(id){

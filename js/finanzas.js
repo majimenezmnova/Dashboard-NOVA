@@ -132,20 +132,16 @@ function getFinTotales() {
 }
 
 function renderFinKPIs() {
-  // Ingresos y beneficio vienen de perfiles (registrados en reportes)
-  var totalIng = TEAM.reduce(function(s,m){return s+(m.ingresos||0);},0);
-  var totalBen = TEAM.reduce(function(s,m){return s+(m.beneficio||0);},0);
-  // Gastos vienen de movimientos (registrados en finanzas)
-  var totalGas = movimientos.reduce(function(s,m){return m.tipo==='gasto'?s+m.importe:s;},0);
+  var t = getFinTotales();
   var totalH = TEAM.reduce(function(s,m){return s+(m.horas||0);},0);
-  var eh = totalH>0?Math.round(totalBen/totalH*10)/10:0;
+  var eh = totalH>0?Math.round(t.ben/totalH*10)/10:0;
   function si(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
-  si('fin-kpi-ing',totalIng.toLocaleString('es-ES')+'€');
-  si('fin-kpi-gas',totalGas.toLocaleString('es-ES')+'€');
-  si('fin-kpi-ben',(totalBen>=0?'+':'')+totalBen.toLocaleString('es-ES')+'€');
+  si('fin-kpi-ing',t.ing.toLocaleString('es-ES')+'€');
+  si('fin-kpi-gas',t.gas.toLocaleString('es-ES')+'€');
+  si('fin-kpi-ben',(t.ben>=0?'+':'')+t.ben.toLocaleString('es-ES')+'€');
   si('fin-kpi-eh',eh>0?eh+'€/h':'—');
   var benEl=document.getElementById('fin-kpi-ben');
-  if(benEl)benEl.style.color=totalBen>=0?'#534AB7':'#E24B4A';
+  if(benEl)benEl.style.color=t.ben>=0?'#534AB7':'#E24B4A';
 }
 
 function renderFinMovimientos() {
