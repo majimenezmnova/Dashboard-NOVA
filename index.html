@@ -608,34 +608,15 @@
       <!-- KPIs -->
       <div class="page" id="page-kpis">
         <div class="tabs">
-          <div class="tab on" onclick="swKpiTab('kpis-registrar',this)">➕ Mis KPIs</div>
+          <div class="tab on" onclick="swKpiTab('kpis-general',this)">🌍 General</div>
           <div class="tab" onclick="swKpiTab('kpis-equipo',this)">👥 Equipo</div>
           <div class="tab" onclick="swKpiTab('kpis-analisis',this)">📈 Análisis</div>
-          <div class="tab" onclick="swKpiTab('kpis-historial',this)">📋 Historial</div>
+          <div class="tab" onclick="swKpiTab('kpis-mis',this)">➕ Mis KPIs</div>
         </div>
 
-        <!-- TAB MIS KPIs -->
-        <div id="kpis-registrar">
-          <div id="kpis-mis-totales"></div>
-          <div class="card">
-            <div class="ct">Registrar</div>
-            <div class="fr" style="margin-bottom:.75rem">
-              <div class="fg" style="margin-bottom:0"><label>Nota (opcional)</label><input id="kpi-nota" type="text" placeholder="Ej: Acabé Zero to One, visita a cliente..."></div>
-              <div class="fg" style="margin-bottom:0"><label>Fecha</label><input id="kpi-fecha" type="date"></div>
-            </div>
-            <div style="margin-bottom:.875rem">
-              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📚 BookPoint</div>
-              <div style="display:flex;gap:8px">
-                <button class="btn" onclick="saveKpi('bp',1)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+1 pt · Corto</button>
-                <button class="btn" onclick="saveKpi('bp',2)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+2 pts · Medio</button>
-                <button class="btn" onclick="saveKpi('bp',3)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+3 pts · Largo</button>
-              </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-              <button class="btn" onclick="saveKpi('obvs',1)" style="background:#E1F5EE;color:#085041;border:none;padding:.75rem;font-size:14px">🏃 +1 OBVS</button>
-              <button class="btn" onclick="saveKpi('lp',1)" style="background:#FAEEDA;color:#7A4F0D;border:none;padding:.75rem;font-size:14px">🎓 +1 LP</button>
-            </div>
-          </div>
+        <!-- TAB GENERAL -->
+        <div id="kpis-general">
+          <div id="kpis-general-content"></div>
         </div>
 
         <!-- TAB EQUIPO -->
@@ -656,8 +637,28 @@
           </div>
         </div>
 
-        <!-- TAB HISTORIAL -->
-        <div id="kpis-historial" style="display:none">
+        <!-- TAB MIS KPIs -->
+        <div id="kpis-mis" style="display:none">
+          <div id="kpis-mis-totales"></div>
+          <div class="card">
+            <div class="ct">Registrar</div>
+            <div class="fr" style="margin-bottom:.75rem">
+              <div class="fg" style="margin-bottom:0"><label>Nota (opcional)</label><input id="kpi-nota" type="text" placeholder="Ej: Acabé Zero to One, visita a cliente..."></div>
+              <div class="fg" style="margin-bottom:0"><label>Fecha</label><input id="kpi-fecha" type="date"></div>
+            </div>
+            <div style="margin-bottom:.875rem">
+              <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">📚 BookPoint</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn" onclick="saveKpi('bp',1)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+1 pt · Corto</button>
+                <button class="btn" onclick="saveKpi('bp',2)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+2 pts · Medio</button>
+                <button class="btn" onclick="saveKpi('bp',3)" style="flex:1;background:#EEEDFE;color:#534AB7;border:none">+3 pts · Largo</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.875rem">
+              <button class="btn" onclick="saveKpi('obvs',1)" style="background:#E1F5EE;color:#085041;border:none;padding:.75rem;font-size:14px">🏃 +1 OBVS</button>
+              <button class="btn" onclick="saveKpi('lp',1)" style="background:#FAEEDA;color:#7A4F0D;border:none;padding:.75rem;font-size:14px">🎓 +1 LP</button>
+            </div>
+          </div>
           <div class="card">
             <div class="ct">Mi historial</div>
             <div id="kpis-hist-list"></div>

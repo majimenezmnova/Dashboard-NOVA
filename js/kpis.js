@@ -1,6 +1,6 @@
 // ══ KPIs ══
 var kpis = [];
-var _kpisTab = 'kpis-registrar';
+var _kpisTab = 'kpis-general';
 var _kpiCharts = {};
 
 var _METAS = {bp:66, lp:18, fac:15000, ben:7500};
@@ -10,29 +10,31 @@ var _KPICFG = {
   lp:   {ico:'🎓', lbl:'Learning Paths', col:'#EF9F27', bg:'#FAEEDA'}
 };
 
+var _KPI_TABS = ['kpis-general','kpis-equipo','kpis-analisis','kpis-mis'];
+
 function swKpiTab(id, el) {
-  ['kpis-registrar','kpis-equipo','kpis-analisis','kpis-historial'].forEach(function(t){
+  _KPI_TABS.forEach(function(t){
     var e=document.getElementById(t);if(e)e.style.display='none';
   });
   var te=document.getElementById(id);if(te)te.style.display='block';
   document.querySelectorAll('#page-kpis .tab').forEach(function(t){t.classList.remove('on');});
   if(el)el.classList.add('on');
   _kpisTab=id;
-  if(id==='kpis-registrar')renderMisKpis();
+  if(id==='kpis-general')renderKpisGeneral();
   if(id==='kpis-equipo')renderKpisEquipo();
   if(id==='kpis-analisis')setTimeout(renderKpisAnalisis,80);
-  if(id==='kpis-historial')renderKpisHist();
+  if(id==='kpis-mis'){renderMisKpis();renderKpisHist();}
 }
 
 function renderKpisPage() {
   var fEl=document.getElementById('kpi-fecha');if(fEl&&!fEl.value)fEl.valueAsDate=new Date();
-  if(_kpisTab==='kpis-registrar')renderMisKpis();
+  if(_kpisTab==='kpis-general')renderKpisGeneral();
   else if(_kpisTab==='kpis-equipo')renderKpisEquipo();
   else if(_kpisTab==='kpis-analisis')setTimeout(renderKpisAnalisis,80);
-  else if(_kpisTab==='kpis-historial')renderKpisHist();
+  else if(_kpisTab==='kpis-mis'){renderMisKpis();renderKpisHist();}
 }
 
-// Calcula todos los KPIs de una persona (bp, lp, obvs + fac/ben desde movimientos)
+// Calcula KPIs de una persona (bp, lp, obvs + fac/ben desde movimientos)
 function _getKpis(email) {
   var mis=kpis.filter(function(k){return k.email===email;});
   var bp=mis.filter(function(k){return k.tipo==='bp';}).reduce(function(s,k){return s+k.puntos;},0);
@@ -49,38 +51,110 @@ function _getKpis(email) {
   return {bp:bp,bpLib:bpLib,obvs:obvs,lp:lp,fac:fac,ben:ben};
 }
 
-// Barra de progreso HTML
+// Barra de progreso
 function _pbar(val, meta, col) {
   var pct=Math.min(100,Math.round(val/meta*100));
   var c=pct>=100?'#1D9E75':pct>=60?col:pct>=30?'#EF9F27':'#E24B4A';
-  return {pct:pct,col:c,bar:'<div style="background:var(--bg2);border-radius:4px;height:7px;overflow:hidden;margin-top:5px">'
-    +'<div style="width:'+pct+'%;height:100%;background:'+c+';border-radius:4px;transition:width .5s"></div></div>'};
+  return {pct:pct,col:c,bar:'<div style="background:var(--bg2);border-radius:4px;height:8px;overflow:hidden;margin-top:6px">'
+    +'<div style="width:'+pct+'%;height:100%;background:'+c+';border-radius:4px;transition:width .6s"></div></div>'};
 }
 
+// ── TAB GENERAL: progreso global del equipo ──
+function renderKpisGeneral() {
+  var el=document.getElementById('kpis-general-content');if(!el)return;
+  var emails=Object.keys(USERS);
+  var n=emails.length||1;
+  var tot={bp:0,lp:0,fac:0,ben:0,obvs:0};
+  emails.forEach(function(e){var d=_getKpis(e);tot.bp+=d.bp;tot.lp+=d.lp;tot.fac+=d.fac;tot.ben+=d.ben;tot.obvs+=d.obvs;});
+
+  var metaTot={bp:n*_METAS.bp, lp:n*_METAS.lp, fac:n*_METAS.fac, ben:n*_METAS.ben};
+  var fmt=function(v){return v>=1000?(v/1000).toFixed(1)+'K€':Math.round(v)+'€';};
+
+  var items=[
+    {ico:'📚',lbl:'BookPoints',val:tot.bp,meta:metaTot.bp,col:'#534AB7',vf:tot.bp+' pts',mf:metaTot.bp+' pts'},
+    {ico:'🎓',lbl:'Learning Paths',val:tot.lp,meta:metaTot.lp,col:'#EF9F27',vf:tot.lp+'',mf:metaTot.lp+''},
+    {ico:'💶',lbl:'Facturación',val:tot.fac,meta:metaTot.fac,col:'#1D9E75',vf:fmt(tot.fac),mf:fmt(metaTot.fac)},
+    {ico:'📈',lbl:'Beneficio',val:tot.ben,meta:metaTot.ben,col:'#534AB7',vf:fmt(tot.ben),mf:fmt(metaTot.ben)},
+    {ico:'🏃',lbl:'OBVS',val:tot.obvs,meta:0,col:'#1D9E75',vf:tot.obvs+' visitas',mf:''}
+  ];
+
+  var html='<div class="card" style="margin-bottom:10px">'
+    +'<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.875rem">Progreso del equipo · '+n+' personas</div>';
+
+  html+=items.map(function(k){
+    var pb=k.meta>0?_pbar(k.val,k.meta,k.col):null;
+    var col=pb?pb.col:k.col;
+    return '<div style="margin-bottom:1rem">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">'
+        +'<div style="font-size:13px;font-weight:600;color:var(--text)">'+k.ico+' '+k.lbl+'</div>'
+        +'<div style="font-size:12px;color:var(--text2)">'
+          +'<span style="font-weight:700;color:'+col+'">'+k.vf+'</span>'
+          +(k.mf?' <span style="color:var(--text3)">/ '+k.mf+'</span>':'')
+        +'</div>'
+      +'</div>'
+      +(pb?pb.bar+' <div style="font-size:10px;color:'+pb.col+';text-align:right;margin-top:2px">'+pb.pct+'%</div>':'')
+    +'</div>';
+  }).join('');
+  html+='</div>';
+
+  // Aportación por persona (mini cards)
+  html+='<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding:0 2px">Aportación individual</div>';
+  html+=emails.map(function(e){
+    var d=_getKpis(e);var u=USERS[e];
+    var pbBP=_pbar(d.bp,_METAS.bp,'#534AB7');
+    var pbLP=_pbar(d.lp,_METAS.lp,'#EF9F27');
+    var pbFac=_pbar(d.fac,_METAS.fac,'#1D9E75');
+    var pbBen=_pbar(d.ben,_METAS.ben,'#534AB7');
+    return '<div class="card" style="margin-bottom:10px">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:.75rem">'
+        +'<div class="av '+u.av+'" style="width:28px;height:28px;font-size:10px;flex-shrink:0">'+u.ini+'</div>'
+        +'<div style="font-weight:700;font-size:13px">'+u.name+'</div>'
+        +'<div style="margin-left:auto;font-size:11px;color:var(--text3)">🏃 '+d.obvs+' OBVS</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+      +[
+        {lbl:'BP',vf:d.bp+' pts',pb:pbBP},
+        {lbl:'LP',vf:d.lp+'',pb:pbLP},
+        {lbl:'Factur.',vf:d.fac>=1000?(d.fac/1000).toFixed(1)+'K€':Math.round(d.fac)+'€',pb:pbFac},
+        {lbl:'Benef.',vf:d.ben>=1000?(d.ben/1000).toFixed(1)+'K€':Math.round(d.ben)+'€',pb:pbBen}
+      ].map(function(k){
+        return '<div>'
+          +'<div style="display:flex;justify-content:space-between;margin-bottom:2px">'
+            +'<span style="font-size:11px;color:var(--text3)">'+k.lbl+'</span>'
+            +'<span style="font-size:12px;font-weight:700;color:'+k.pb.col+'">'+k.vf+'</span>'
+          +'</div>'
+          +k.pb.bar
+        +'</div>';
+      }).join('')
+      +'</div></div>';
+  }).join('');
+
+  el.innerHTML=html;
+}
+
+// ── TAB MIS KPIs: totales personales ──
 function renderMisKpis() {
   var el=document.getElementById('kpis-mis-totales');if(!el||!cu)return;
   var d=_getKpis(cu.email);
-  var fmt=function(n,unit){return unit==='€'?n.toLocaleString('es-ES',{maximumFractionDigits:0})+'€':n+(unit?' '+unit:'');};
+  var fmt=function(n){return n>=1000?(n/1000).toFixed(1)+'K€':Math.round(n)+'€';};
 
   var cards=[
-    {lbl:'BookPoints',ico:'📚',val:d.bp,meta:_METAS.bp,col:'#534AB7',unit:'pts',
-      sub:d.bpLib+' libro'+(d.bpLib!==1?'s':(d.bpLib===0?'s':''))},
-    {lbl:'Learning Paths',ico:'🎓',val:d.lp,meta:_METAS.lp,col:'#EF9F27',unit:'',sub:'meta: '+_METAS.lp},
-    {lbl:'Facturación',ico:'💶',val:d.fac,meta:_METAS.fac,col:'#1D9E75',unit:'€',sub:'meta: '+fmt(_METAS.fac,'€')},
-    {lbl:'Beneficio',ico:'📈',val:d.ben,meta:_METAS.ben,col:'#534AB7',unit:'€',sub:'meta: '+fmt(_METAS.ben,'€')},
-    {lbl:'OBVS',ico:'🏃',val:d.obvs,meta:0,col:'#1D9E75',unit:'',sub:'visitas'}
+    {lbl:'BookPoints',ico:'📚',val:d.bp,meta:_METAS.bp,col:'#534AB7',vf:d.bp+' pts',sub:d.bpLib+' libro'+(d.bpLib!==1?'s':'')},
+    {lbl:'Learning Paths',ico:'🎓',val:d.lp,meta:_METAS.lp,col:'#EF9F27',vf:d.lp+'',sub:'meta: '+_METAS.lp},
+    {lbl:'Facturación',ico:'💶',val:d.fac,meta:_METAS.fac,col:'#1D9E75',vf:fmt(d.fac),sub:'meta: '+fmt(_METAS.fac)},
+    {lbl:'Beneficio',ico:'📈',val:d.ben,meta:_METAS.ben,col:'#534AB7',vf:fmt(d.ben),sub:'meta: '+fmt(_METAS.ben)},
+    {lbl:'OBVS',ico:'🏃',val:d.obvs,meta:0,col:'#1D9E75',vf:d.obvs+'',sub:'visitas'}
   ];
 
   el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'
     +cards.map(function(k){
-      var vf=fmt(k.val,k.unit);
       var pb=k.meta>0?_pbar(k.val,k.meta,k.col):null;
       return '<div class="card" style="margin-bottom:0">'
         +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
           +'<div style="font-size:12px;font-weight:600;color:var(--text2)">'+k.ico+' '+k.lbl+'</div>'
           +(pb?'<div style="font-size:11px;font-weight:700;color:'+pb.col+'">'+pb.pct+'%</div>':'')
         +'</div>'
-        +'<div style="font-size:24px;font-weight:700;color:'+(pb?pb.col:k.col)+'">'+vf+'</div>'
+        +'<div style="font-size:24px;font-weight:700;color:'+(pb?pb.col:k.col)+'">'+k.vf+'</div>'
         +'<div style="font-size:11px;color:var(--text3)">'+k.sub+'</div>'
         +(pb?pb.bar:'')
       +'</div>';
@@ -108,14 +182,14 @@ function delKpi(id) {
   renderKpisPage();
 }
 
+// ── TAB EQUIPO: desglose por persona ──
 function renderKpisEquipo() {
   var el=document.getElementById('kpis-equipo-list');if(!el)return;
   var emails=Object.keys(USERS);
-  var rows=emails.map(function(e){return {u:USERS[e],d:_getKpis(e)};});
   var fmt=function(n){return n>=1000?(n/1000).toFixed(1)+'K€':Math.round(n)+'€';};
 
-  var html=rows.map(function(r){
-    var d=r.d;
+  var html=emails.map(function(e){
+    var d=_getKpis(e);var u=USERS[e];
     var items=[
       {lbl:'BP',    val:d.bp,  meta:_METAS.bp,  col:'#534AB7', vf:d.bp+' pts'},
       {lbl:'LP',    val:d.lp,  meta:_METAS.lp,  col:'#EF9F27', vf:d.lp+''},
@@ -125,8 +199,8 @@ function renderKpisEquipo() {
     ];
     return '<div class="card" style="margin-bottom:10px">'
       +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:.875rem">'
-        +'<div class="av '+r.u.av+'" style="width:32px;height:32px;font-size:11px;flex-shrink:0">'+r.u.ini+'</div>'
-        +'<div style="font-weight:700;font-size:14px">'+r.u.name+'</div>'
+        +'<div class="av '+u.av+'" style="width:32px;height:32px;font-size:11px;flex-shrink:0">'+u.ini+'</div>'
+        +'<div style="font-weight:700;font-size:14px">'+u.name+'</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">'
       +items.map(function(k){
@@ -143,29 +217,10 @@ function renderKpisEquipo() {
       +'</div></div>';
   }).join('');
 
-  // Totales del equipo
-  var n=emails.length;
-  var tot={bp:0,lp:0,fac:0,ben:0,obvs:0};
-  emails.forEach(function(e){var d=_getKpis(e);tot.bp+=d.bp;tot.lp+=d.lp;tot.fac+=d.fac;tot.ben+=d.ben;tot.obvs+=d.obvs;});
-  html+='<div class="card" style="background:var(--purple-l)">'
-    +'<div style="font-size:11px;font-weight:600;color:var(--purple-d);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.75rem">Total equipo ('+n+' personas)</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center">'
-    +[
-      {lbl:'BP',val:tot.bp+' pts',sub:'/ '+(n*_METAS.bp)+' pts'},
-      {lbl:'LP',val:tot.lp+'',sub:'/ '+(n*_METAS.lp)},
-      {lbl:'Factur.',val:(tot.fac/1000).toFixed(1)+'K€',sub:'/ '+(n*_METAS.fac/1000)+'K€'},
-      {lbl:'Benef.',val:(tot.ben/1000).toFixed(1)+'K€',sub:'/ '+(n*_METAS.ben/1000)+'K€'},
-      {lbl:'OBVS',val:tot.obvs+'',sub:'visitas'}
-    ].map(function(t){
-      return '<div><div style="font-size:10px;font-weight:600;color:var(--purple-d)">'+t.lbl+'</div>'
-        +'<div style="font-size:18px;font-weight:700;color:var(--purple)">'+t.val+'</div>'
-        +'<div style="font-size:10px;color:var(--purple-d)">'+t.sub+'</div></div>';
-    }).join('')
-    +'</div></div>';
-
   el.innerHTML=html;
 }
 
+// ── TAB ANÁLISIS ──
 function renderKpisAnalisis() {
   var emails=Object.keys(USERS);
   var names=emails.map(function(e){return USERS[e].name;});
@@ -179,7 +234,6 @@ function renderKpisAnalisis() {
   _kpiBar('kpi-chart-fac',names,facD,_METAS.fac,'#1D9E75','Facturación por persona','€');
   _kpiBar('kpi-chart-ben',names,benD,_METAS.ben,'#534AB7','Beneficio por persona','€');
 
-  // Radar: % de objetivo por KPI (promedio equipo)
   var n=emails.length||1;
   var radarData=[
     Math.round(bpD.reduce(function(s,v){return s+v;},0)/n/_METAS.bp*100),
@@ -216,6 +270,7 @@ function _kpiBar(id,labels,data,meta,col,title,unit) {
     scales:{y:{beginAtZero:true,ticks:{font:{size:10}}},x:{ticks:{font:{size:11}}}}}});
 }
 
+// ── HISTORIAL personal ──
 function renderKpisHist() {
   var el=document.getElementById('kpis-hist-list');if(!el||!cu)return;
   var mis=kpis.filter(function(k){return k.email===cu.email;}).slice(0,40);
