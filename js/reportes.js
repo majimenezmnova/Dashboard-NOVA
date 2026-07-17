@@ -47,7 +47,7 @@ function getPer(){var now=new Date(),d=now.getDate(),mes=now.toLocaleDateString(
 
 function getPeriodoInfo(){
   var now=new Date();
-  var start=new Date(2026,6,1);
+  var start=new Date(2026,6,5);
   var diffMs=now-start;
   if(diffMs<0){return{abierto:false,periodo:0,abre:start,cierra:null,msHastaAbre:-diffMs};}
   var diasDesdeStart=Math.floor(diffMs/86400000);
