@@ -53,14 +53,14 @@ function getPeriodoInfo(){
   var diasDesdeStart=Math.floor(diffMs/86400000);
   var periodoIdx=Math.floor(diasDesdeStart/15);
   var diaEnPeriodo=diasDesdeStart%15;
-  var abierto=diaEnPeriodo===0;
+  var abierto=diaEnPeriodo<=1;
   var inicioPeriodo=new Date(start.getTime());
   inicioPeriodo.setDate(inicioPeriodo.getDate()+periodoIdx*15);
   var cierraPeriodo=new Date(inicioPeriodo.getTime());
-  cierraPeriodo.setDate(cierraPeriodo.getDate()+1);
+  cierraPeriodo.setDate(cierraPeriodo.getDate()+2);
   var siguienteApertura=new Date(inicioPeriodo.getTime());
   siguienteApertura.setDate(siguienteApertura.getDate()+15);
-  return{abierto:abierto,periodo:periodoIdx+1,abre:inicioPeriodo,cierra:cierraPeriodo,
+  return{abierto:abierto,periodo:periodoIdx+1,abre:siguienteApertura,cierra:cierraPeriodo,
     msHastaCierre:abierto?(cierraPeriodo-now):0,
     msHastaAbre:!abierto?(siguienteApertura-now):0};
 }
