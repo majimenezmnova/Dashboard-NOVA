@@ -102,7 +102,7 @@ const DB = {
 
   // KPIs
   async getKpis() {
-    const { data, error } = await sb.from('kpis').select('*').order('ts', { ascending: false });
+    const { data, error } = await sb.from('kpis').select('*').order('created_at', { ascending: false });
     if(error) { console.error('getKpis error:', error); return []; }
     return data || [];
   },
@@ -228,9 +228,19 @@ async function syncMovimientos() {
 
 async function syncKpis() {
   var data = await DB.getKpis();
-  kpis = data.map(function(k) {
+  var remoteKpis = data.map(function(k) {
     return {id:k.id, email:k.email, tipo:k.tipo, puntos:k.puntos||1, nota:k.nota||'', fecha:k.fecha, ts:k.ts||0};
   });
+  // Preserve local pending items not yet confirmed in DB (same pattern as syncHoras)
+  var localPendientes = kpis.filter(function(k){return String(k.id).startsWith('local_');});
+  localPendientes = localPendientes.filter(function(lk){
+    return !remoteKpis.some(function(rk){
+      return rk.email===lk.email && rk.tipo===lk.tipo && rk.puntos===lk.puntos
+        && rk.fecha===lk.fecha && Math.abs((rk.ts||0)-(lk.ts||0))<10000;
+    });
+  });
+  kpis = remoteKpis.concat(localPendientes);
+  kpis.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
   if(document.getElementById('page-kpis') && document.getElementById('page-kpis').classList.contains('on')) {
     renderKpisPage();
   }

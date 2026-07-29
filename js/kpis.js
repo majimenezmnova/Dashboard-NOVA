@@ -10,7 +10,7 @@ var _KPICFG = {
   lp:   {ico:'🎓', lbl:'Learning Paths', col:'#EF9F27', bg:'#FAEEDA'}
 };
 
-var _KPI_TABS = ['kpis-general','kpis-equipo','kpis-analisis','kpis-mis'];
+var _KPI_TABS = ['kpis-general','kpis-analisis','kpis-mis'];
 
 function swKpiTab(id, el) {
   _KPI_TABS.forEach(function(t){
@@ -21,7 +21,6 @@ function swKpiTab(id, el) {
   if(el)el.classList.add('on');
   _kpisTab=id;
   if(id==='kpis-general')renderKpisGeneral();
-  if(id==='kpis-equipo')renderKpisEquipo();
   if(id==='kpis-analisis')setTimeout(renderKpisAnalisis,80);
   if(id==='kpis-mis'){renderMisKpis();renderKpisHist();}
 }
@@ -29,7 +28,6 @@ function swKpiTab(id, el) {
 function renderKpisPage() {
   var fEl=document.getElementById('kpi-fecha');if(fEl&&!fEl.value)fEl.valueAsDate=new Date();
   if(_kpisTab==='kpis-general')renderKpisGeneral();
-  else if(_kpisTab==='kpis-equipo')renderKpisEquipo();
   else if(_kpisTab==='kpis-analisis')setTimeout(renderKpisAnalisis,80);
   else if(_kpisTab==='kpis-mis'){renderMisKpis();renderKpisHist();}
 }
