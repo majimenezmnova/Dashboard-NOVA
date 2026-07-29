@@ -129,8 +129,8 @@ function renderMoodHist(){
 // TRACKER FIN
 function renderFin(){
   var datos=proyectos.map(function(p){
-    var ing=TEAM.filter(function(m){return m.proyecto===p.nombre;}).reduce(function(s,m){return s+m.ingresos;},0);
-    return {nombre:p.nombre,ingresos:ing,gastos:0,beneficio:ing};
+    var c=_calcProy(p.nombre);
+    return {nombre:p.nombre,ingresos:c.ingresos,gastos:c.gastos,beneficio:c.beneficio};
   });
   var tB=datos.reduce(function(s,d){return s+d.beneficio;},0);
   var fl=document.getElementById('fin-lbl');if(fl)fl.textContent='beneficio: '+(tB>=0?'+':'')+tB.toLocaleString('es-ES')+'€';
@@ -138,11 +138,12 @@ function renderFin(){
   tb.innerHTML=datos.length?datos.map(function(d){
     return '<tr><td><span class="tag tp" style="font-size:10px">'+d.nombre+'</span></td>'
       +'<td style="text-align:right;font-size:12px;color:#3B6D11">'+(d.ingresos>0?'+'+d.ingresos.toLocaleString('es-ES')+'€':'<span style="color:var(--text3)">—</span>')+'</td>'
-      +'<td style="text-align:right;font-size:12px;color:#A32D2D"><span style="color:var(--text3)">—</span></td>'
+      +'<td style="text-align:right;font-size:12px;color:#A32D2D">'+(d.gastos>0?'-'+d.gastos.toLocaleString('es-ES')+'€':'<span style="color:var(--text3)">—</span>')+'</td>'
       +'<td style="text-align:right;font-size:12px;'+colB(d.beneficio)+'">'+fmtE(d.beneficio)+'</td></tr>';
   }).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1rem;font-size:12px">Crea proyectos para ver el tracker</td></tr>';
   var tI=datos.reduce(function(s,d){return s+d.ingresos;},0);
-  if(tf)tf.innerHTML=datos.length?'<tr style="border-top:2px solid var(--border2)"><td style="font-size:12px;font-weight:600;padding:8px">Total</td><td style="text-align:right;font-size:12px;font-weight:600;color:#3B6D11;padding:8px">'+(tI>0?'+'+tI.toLocaleString('es-ES')+'€':'—')+'</td><td style="text-align:right;padding:8px">—</td><td style="text-align:right;font-size:13px;font-weight:700;padding:8px;'+colB(tB)+'">'+fmtE(tB)+'</td></tr>':'';
+  var tG=datos.reduce(function(s,d){return s+d.gastos;},0);
+  if(tf)tf.innerHTML=datos.length?'<tr style="border-top:2px solid var(--border2)"><td style="font-size:12px;font-weight:600;padding:8px">Total</td><td style="text-align:right;font-size:12px;font-weight:600;color:#3B6D11;padding:8px">'+(tI>0?'+'+tI.toLocaleString('es-ES')+'€':'—')+'</td><td style="text-align:right;font-size:12px;font-weight:600;color:#A32D2D;padding:8px">'+(tG>0?'-'+tG.toLocaleString('es-ES')+'€':'—')+'</td><td style="text-align:right;font-size:13px;font-weight:700;padding:8px;'+colB(tB)+'">'+fmtE(tB)+'</td></tr>':'';
 }
 
 // RACHA CALOR

@@ -1,5 +1,27 @@
 // PROYECTOS (parte 1: CRUD + modals + updSelects)
 var ETAGS={Operacional:'tt',MVP:'tp',Validando:'tb2',Idea:'tc',Pausado:'ta'};
+
+// Calcula métricas de un proyecto en tiempo real desde las fuentes de datos
+function _calcProy(nombre) {
+  var hrs = (allHoras||[]).reduce(function(s,h){
+    return s + (h.proyecto===nombre ? (parseFloat(h.horas)||0) : 0);
+  }, 0);
+  var ing=0, gas=0, ben=0;
+  (movimientos||[]).forEach(function(m){
+    if(m.proyecto!==nombre) return;
+    if(m.tipo==='ingreso'){ing+=m.importe; ben+=m.importe;}
+    else if(m.tipo==='gasto'){gas+=m.importe; if(m.categoria!=='Operativo')ben-=m.importe;}
+  });
+  var reps=(window.allReportes||[]).filter(function(r){return r.proyecto===nombre;});
+  return {
+    horas_total: Math.round(hrs*10)/10,
+    ingresos: ing, gastos: gas, beneficio: ben,
+    reportes_count: reps.length,
+    aprendizajes_count: reps.filter(function(r){return (r.aprendizajes||'').trim();}).length,
+    avances_count:      reps.filter(function(r){return (r.avances||'').trim();}).length,
+    bloqueos_count:     reps.filter(function(r){return (r.bloqueos||'').trim();}).length
+  };
+}
 function renderProys(){
   renderProyCards();
 }
@@ -109,11 +131,12 @@ var FASE_CONFIG = {
 };
 
 function calcProyPuntos(p) {
-  var h=Math.round((p.horas_total||0)*2), e=Math.round((p.ingresos||0)/5);
-  var r=(p.reportes_count||0)*20, a=(p.aprendizajes_count||0)*15;
-  var av=(p.avances_count||0)*10;
-  var tieneActividad=(p.horas_total||0)>0||(p.ingresos||0)>0||(p.reportes_count||0)>0;
-  var b=tieneActividad?Math.max(0,30-(p.bloqueos_count||0)*10):0;
+  var c=_calcProy(p.nombre);
+  var h=Math.round((c.horas_total||0)*2), e=Math.round((c.ingresos||0)/5);
+  var r=(c.reportes_count||0)*20, a=(c.aprendizajes_count||0)*15;
+  var av=(c.avances_count||0)*10;
+  var tieneActividad=(c.horas_total||0)>0||(c.ingresos||0)>0||(c.reportes_count||0)>0;
+  var b=tieneActividad?Math.max(0,30-(c.bloqueos_count||0)*10):0;
   return {total:h+e+r+a+av+b, pts_horas:h, pts_ingresos:e, pts_reportes:r, pts_aprend:a, pts_avances:av, pts_bloqueos:b};
 }
 
@@ -122,9 +145,10 @@ function getFasesRecomendadas(p) {
   if(estado==='Exploracion') fases=[1,2,3];
   else if(estado==='Validacion') fases=[4,5,6,7];
   else if(estado==='Expansion') fases=[8,9,10];
-  if((p.bloqueos_count||0)>2 && fases.indexOf(8)<0) fases.push(8);
-  if((p.ingresos||0)===0 && (p.horas_total||0)>10 && fases.indexOf(5)<0) fases.push(5);
-  if((p.ingresos||0)>500 && fases.indexOf(9)<0) fases.push(9);
+  var c=_calcProy(p.nombre);
+  if(c.bloqueos_count>2 && fases.indexOf(8)<0) fases.push(8);
+  if(c.ingresos===0 && c.horas_total>10 && fases.indexOf(5)<0) fases.push(5);
+  if(c.ingresos>500 && fases.indexOf(9)<0) fases.push(9);
   return fases.sort(function(a,b){return a-b;});
 }
 
@@ -140,11 +164,12 @@ function renderProyRanking() {
   var medals=['🥇','🥈','🥉'], posC=['prk-pos-1','prk-pos-2','prk-pos-3'];
   el.innerHTML=sorted.map(function(p,i){
     var pts=calcProyPuntos(p), fc=FASE_CONFIG[p.estado]||FASE_CONFIG.Exploracion;
+    var c=_calcProy(p.nombre);
     var badges=[];
-    if((p.horas_total||0)>=50) badges.push({icon:'⏱',lbl:'50h+',col:'#7F77DD'});
-    if((p.ingresos||0)>=500)   badges.push({icon:'💰',lbl:'500€+',col:'#1D9E75'});
-    if((p.bloqueos_count||0)===0) badges.push({icon:'🚀',lbl:'Sin bloqueos',col:'#534AB7'});
-    if((p.reportes_count||0)>=3)  badges.push({icon:'📝',lbl:'Consistente',col:'#D85A30'});
+    if(c.horas_total>=50) badges.push({icon:'⏱',lbl:'50h+',col:'#7F77DD'});
+    if(c.ingresos>=500)   badges.push({icon:'💰',lbl:'500€+',col:'#1D9E75'});
+    if(c.bloqueos_count===0) badges.push({icon:'🚀',lbl:'Sin bloqueos',col:'#534AB7'});
+    if(c.reportes_count>=3)  badges.push({icon:'📝',lbl:'Consistente',col:'#D85A30'});
     var bars=[
       {label:'Horas',val:pts.pts_horas,color:'#7F77DD'},
       {label:'Ingresos',val:pts.pts_ingresos,color:'#1D9E75'},
@@ -187,7 +212,8 @@ function renderMentorCards(proyNombre) {
   if(!proysFiltro.length){el.innerHTML='<div class="empty">👤<p>Crea proyectos para ver recomendaciones</p></div>';return;}
   el.innerHTML=proysFiltro.map(function(p){
     var fases=getFasesRecomendadas(p), fc=FASE_CONFIG[p.estado]||FASE_CONFIG.Exploracion;
-    var tieneBloqueos=(p.bloqueos_count||0)>0, tieneIngresos=(p.ingresos||0)>0;
+    var c=_calcProy(p.nombre);
+    var tieneBloqueos=c.bloqueos_count>0, tieneIngresos=c.ingresos>0;
     var out='<div style="margin-bottom:1.25rem">'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">'
         +'<span class="proj-fase '+fc.cls+'">'+fc.label+'</span>'
@@ -216,8 +242,8 @@ function renderMentorCards(proyNombre) {
       }).join('');
     }
     var esp=[];
-    if(!tieneIngresos&&(p.horas_total||0)>10) esp.push({nombre:'Luis',area:'Goat validación & roadmap'});
-    if((p.horas_total||0)>0) esp.push({nombre:'Sonia',area:'Finanzas'});
+    if(!tieneIngresos&&c.horas_total>10) esp.push({nombre:'Luis',area:'Goat validación & roadmap'});
+    if(c.horas_total>0) esp.push({nombre:'Sonia',area:'Finanzas'});
     if(tieneIngresos) esp.push({nombre:'Néstor',area:'Aceleración'});
     if(esp.length) out+='<div class="mentor-card" style="border-color:var(--purple);background:var(--purple-l)">'
       +'<div class="mentor-fase-title" style="color:var(--purple-d)">⭐ Mentores especiales</div>'
@@ -248,9 +274,9 @@ function renderProyCards(){
   c.innerHTML=proyectos.map(function(p,i){
     var fc=FASE_CONFIG[p.estado]||FASE_CONFIG.Exploracion;
     var miembros=p.miembros||[];
-    var pct_meta=p.meta>0?Math.min(100,Math.round((p.ingresos||0)/p.meta*100)):0;
-    var blq=p.bloqueos_count||0,apr=p.aprendizajes_count||0;
-    var hrs=p.horas_total||0,ing=p.ingresos||0;
+    var c=_calcProy(p.nombre);
+    var hrs=c.horas_total, ing=c.ingresos, apr=c.aprendizajes_count, blq=c.bloqueos_count;
+    var pct_meta=p.meta>0?Math.min(100,Math.round(ing/p.meta*100)):0;
     var membersHtml=miembros.map(function(email){
       var u=USERS[email];if(!u)return'';
       return '<div class="proj-member-av av '+u.av+'" title="'+u.name+'">'+u.ini+'</div>';
