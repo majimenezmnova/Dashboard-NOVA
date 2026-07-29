@@ -139,10 +139,12 @@ function renderInforme(){
 
   var teamFiltro=isPersona?TEAM.filter(function(m){return m.email===_infFilter;}):TEAM.slice();
   if(_infProy!=='todos'){
-    teamFiltro=teamFiltro.filter(function(m){return m.proyecto===_infProy;});
+    var _pFiltro=proyectos.find(function(p){return p.nombre===_infProy;});
+    var _pMiembros=_pFiltro?(_pFiltro.miembros||[]):[];
+    teamFiltro=teamFiltro.filter(function(m){return _pMiembros.indexOf(m.email)>=0;});
   }
 
-  var totalH=teamFiltro.reduce(function(s,m){return s+m.horas;},0)+horasFiltro.reduce(function(s,h){return s+h.horas;},0);
+  var totalH=horasFiltro.reduce(function(s,h){return s+h.horas;},0);
   var totalIng=teamFiltro.reduce(function(s,m){return s+m.ingresos;},0);
   var repHechos=teamFiltro.filter(function(m){return m.reportado;}).length;
   var totalReps=teamFiltro.length;
@@ -219,17 +221,20 @@ function renderInforme(){
             }).join('');
           })()
       +'</div>'
-      +(userReportes.filter(function(r){return true;}).length?
-        '<div style="padding:.75rem 1rem;border-bottom:1px solid var(--border)">'
-          +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Últimos reportes</div>'
-          +userReportes.slice(0,3).map(function(r){
-            return '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">'
-              +'<div style="display:flex;gap:6px;margin-bottom:2px"><span style="font-weight:600">'+r.periodo+'</span><span class="tag tp" style="font-size:10px">'+r.proyecto+'</span>'+(r.mood?'<span>'+r.mood+'</span>':'')+'</div>'
-              +'<div>'+r.avances.slice(0,120)+(r.avances.length>120?'...':'')+'</div>'
-              +(r.horas?'<div style="margin-top:2px;color:var(--text3)">'+r.horas+'h registradas'+(r.importe?' · '+r.importe+'€ facturado':'')+'</div>':'')
-              +'</div>';
-          }).join('')
-        +'</div>':'')
+      +(function(){
+          var personaReps=(window.allReportes||[]).filter(function(r){return r.autor_email===_infFilter;});
+          if(!personaReps.length)return '';
+          return '<div style="padding:.75rem 1rem;border-bottom:1px solid var(--border)">'
+            +'<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Últimos reportes</div>'
+            +personaReps.slice(0,3).map(function(r){
+              return '<div style="padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2)">'
+                +'<div style="display:flex;gap:6px;margin-bottom:2px"><span style="font-weight:600">'+r.periodo+'</span><span class="tag tp" style="font-size:10px">'+r.proyecto+'</span>'+(r.mood?'<span>'+r.mood+'</span>':'')+'</div>'
+                +'<div>'+(r.avances||'').slice(0,120)+((r.avances||'').length>120?'...':'')+'</div>'
+                +(r.horas?'<div style="margin-top:2px;color:var(--text3)">'+r.horas+'h registradas'+(r.importe?' · '+r.importe+'€ facturado':'')+'</div>':'')
+                +'</div>';
+            }).join('')
+          +'</div>';
+        })()
       +(m.bloqueo?'<div style="padding:.75rem 1rem;background:var(--amber-l);font-size:12px;color:#633806"><strong>Bloqueo activo:</strong> '+m.bloqueo+'</div>':'')
       +'</div>';
 
@@ -263,7 +268,7 @@ function renderInforme(){
         var fc=FASE_CONFIG?FASE_CONFIG[p.estado]:{label:p.estado,cls:'fase-exp',color:'#534AB7'};
         var miembros=(p.miembros||[]);
         var hrs=horasFiltro.filter(function(h){return h.proyecto===p.nombre;}).reduce(function(s,h){return s+h.horas;},0);
-        var ing=miembros.reduce(function(s,e){var m=TEAM.find(function(t){return t.email===e;});return s+(m?m.ingresos:0);},0);
+        var ing=_calcProy(p.nombre).ingresos;
         var blq=miembros.filter(function(e){var m=TEAM.find(function(t){return t.email===e;});return m&&m.bloqueo;}).length;
         var pct=p.meta>0?Math.min(100,Math.round(ing/p.meta*100)):0;
         return '<div class="inf-proy-blk">'

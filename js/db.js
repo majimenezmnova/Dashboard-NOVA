@@ -142,6 +142,7 @@ async function syncPerfiles() {
       tm.mentorias_total=p.mentorias_total||0; tm.asesorias_total=p.asesorias_total||0;
       tm.reuniones_total=p.reuniones_total||0; tm.badge_semana_bestia=p.badge_semana_bestia||false;
       tm.badge_conector=p.badge_conector||false; tm.badge_chapado=p.badge_chapado||false;
+      tm.proyecto=p.proyecto||'';
     }
   });
   renderDash(); renderRanking(); renderEH();
