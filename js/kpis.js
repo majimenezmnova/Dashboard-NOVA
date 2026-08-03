@@ -165,7 +165,7 @@ function saveKpi(tipo, puntos) {
   var nota=(document.getElementById('kpi-nota')||{}).value||'';
   var fecha=(document.getElementById('kpi-fecha')||{}).value||new Date().toISOString().slice(0,10);
   var k={id:'local_'+Date.now(),email:cu.email,tipo:tipo,puntos:puntos||1,nota:nota.trim(),fecha:fecha,ts:Date.now()};
-  DB.insertKpi({email:k.email,tipo:k.tipo,puntos:k.puntos,nota:k.nota,fecha:k.fecha,ts:k.ts})
+  DB.insertKpi({email:k.email,tipo:k.tipo,puntos:k.puntos,nota:k.nota,fecha:k.fecha})
     .then(function(data){if(data)k.id=data.id;});
   kpis.unshift(k);
   var notaEl=document.getElementById('kpi-nota');if(notaEl)notaEl.value='';

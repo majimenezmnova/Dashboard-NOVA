@@ -230,7 +230,7 @@ async function syncMovimientos() {
 async function syncKpis() {
   var data = await DB.getKpis();
   var remoteKpis = data.map(function(k) {
-    return {id:k.id, email:k.email, tipo:k.tipo, puntos:k.puntos||1, nota:k.nota||'', fecha:k.fecha, ts:k.ts||0};
+    return {id:k.id, email:k.email, tipo:k.tipo, puntos:k.puntos||1, nota:k.nota||'', fecha:k.fecha, ts:k.created_at?new Date(k.created_at).getTime():0};
   });
   // Preserve local pending items not yet confirmed in DB (same pattern as syncHoras)
   var localPendientes = kpis.filter(function(k){return String(k.id).startsWith('local_');});
